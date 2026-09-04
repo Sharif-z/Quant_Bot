@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onyx Quantitative Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-pure: #000000;
+            --bg-panel: #111111;
+            --border-glow: rgba(255, 215, 0, 0.15);
+            --accent-gold: #FFD700;
+            --accent-green: #00FF41;
+            --accent-red: #FF003C;
+            --text-main: #FFFFFF;
+            --text-dim: #888888;
+        }
+        body {
+            background-color: var(--bg-pure);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 30px;
+        }
+        .title-gold {
+            color: var(--accent-gold);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        .panel:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px var(--border-glow);
+        }
+        .panel-header {
+            color: var(--accent-gold);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .metric-large {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--accent-green);
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+        .sub-metric {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #222;
+        }
+        th {
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+        .ticker { font-weight: 600; }
+        .green { color: var(--accent-green); }
+        .red { color: var(--accent-red); }
+        
+        .terminal {
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--accent-gold);
+            height: 250px;
+            overflow-y: auto;
+            background: #080808;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #222;
+        }
+        .terminal-line {
+            margin-bottom: 5px;
+        }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-pure); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title-gold">Onyx Institutional Platform</div>
+        <div style="font-size: 12px; color: var(--text-dim);">LAST SYNC: {{ portfolio.get('last_updated', 'N/A') }}</div>
+    </header>
+
+    <div class="grid-container">
+        <!-- Panel 1: Account Overview -->
+        <div class="panel">
+            <div class="panel-header">Account Overview <span>...</span></div>
+            <div class="sub-metric">Total Equity (Cash + Holdings)</div>
+            <div class="metric-large">₹{{ "{:,.2f}".format(total_equity) }}</div>
+            <div class="sub-metric" style="margin-top: 15px;">Available Cash: ₹{{ "{:,.2f}".format(portfolio.get('current_cash', 0)) }}</div>
+            
+            {% set initial = portfolio.get('initial_cash', 10000000) %}
+            {% set pnl = total_equity - initial %}
+            {% set pnl_pct = (pnl / initial) * 100 %}
+            <div class="sub-metric" style="margin-top: 10px;">
+                Realized/Unrealized PnL: 
+                <span class="{{ 'green' if pnl >= 0 else 'red' }}">
+                    ₹{{ "{:,.2f}".format(pnl) }} ({{ "{:.2f}".format(pnl_pct) }}%)
+                </span>
+            </div>
+        </div>
+
+        <!-- Panel 2: Algorithm Health -->
+        <div class="panel">
+            <div class="panel-header">Algorithm Health <span>...</span></div>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <span style="color: var(--text-dim); font-size: 12px;">STATISTICAL GATE (EOD)</span>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 5px;">
+                        {% if bot_state.get('gate_passed', True) %}
+                        <span class="green">PASSED</span> - ML Alpha Active
+                        {% else %}
+                        <span class="red">FAILED</span> - Baseline Fallback
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <span style="color: var(--text-dim); font-size: 12px;">MODEL DRIFT (PSI)</span>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 5px;">
+                        {% set psi = bot_state.get('psi_drift', 0.05) %}
+                        <span class="{{ 'red' if psi > 0.25 else 'green' }}">{{ "{:.3f}".format(psi) }}</span>
+                        <span style="font-size: 12px; color: var(--text-dim);"> (Limit: 0.25)</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="color: var(--text-dim); font-size: 12px;">ROLLING IC (20-Day)</span>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 5px;">
+                        {% set ic = bot_state.get('rolling_ic', 0.04) %}
+                        <span class="{{ 'green' if ic > 0 else 'red' }}">{{ "{:.3f}".format(ic) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 3: Holdings Table -->
+        <div class="panel">
+            <div class="panel-header">Holdings Table <span>...</span></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Qty</th>
+                        <th>Avg Price</th>
+                        <th>Trailing Stop</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for symbol, data in portfolio.get('holdings', {}).items() %}
+                    <tr>
+                        <td class="ticker">{{ symbol }}</td>
+                        <td>{{ data.get('qty', 0) }}</td>
+                        <td>₹{{ "{:,.2f}".format(data.get('avg_price', 0)) }}</td>
+                        <td class="red">₹{{ "{:,.2f}".format(data.get('peak_price', 0) * 0.85) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not portfolio.get('holdings') %}
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 20px;">No Active Positions</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Panel 4: Trade Ledger -->
+        <div class="panel">
+            <div class="panel-header">Trade Ledger <span>...</span></div>
+            <div class="terminal">
+                {% for trade in portfolio.get('trade_history', [])|reverse %}
+                <div class="terminal-line">
+                    [{{ trade.get('timestamp')[:19] }}] {{ trade.get('action') }}_ORDER: {{ trade.get('symbol') }} {{ trade.get('qty') }} @ ₹{{ "{:,.2f}".format(trade.get('price', 0)) }} (FILLED)
+                </div>
+                {% endfor %}
+                {% if not portfolio.get('trade_history') %}
+                <div class="terminal-line">No trades executed yet. Waiting for signal...</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

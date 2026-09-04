@@ -16,6 +16,7 @@ class PaperPortfolio:
             "initial_cash": 10_000_000.0,
             "current_cash": 10_000_000.0,
             "holdings": {},  # Format: {"RELIANCE": {"qty": 100, "avg_price": 2500.0}}
+            "trade_history": [],
             "last_updated": None
         }
         self.load_state()
@@ -96,6 +97,24 @@ class PaperPortfolio:
             # Clean up if holding goes to zero
             if self.state["holdings"][symbol]["qty"] == 0:
                 del self.state["holdings"][symbol]
+                
+        # Phase 14: Log trade history
+        if "trade_history" not in self.state:
+            self.state["trade_history"] = []
+            
+        trade_record = {
+            "timestamp": datetime.now().isoformat(),
+            "symbol": symbol,
+            "action": "BUY" if qty > 0 else "SELL",
+            "qty": abs(qty),
+            "price": price,
+            "value": trade_value
+        }
+        self.state["trade_history"].append(trade_record)
+        
+        # Enforce size limit on visual ledger
+        if len(self.state["trade_history"]) > 100:
+            self.state["trade_history"] = self.state["trade_history"][-100:]
                 
         self.save_state()
         logger.info(f"Executed paper trade: {'BUY' if qty > 0 else 'SELL'} {abs(qty)} {symbol} @ ₹{price:.2f}")

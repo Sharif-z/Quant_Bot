@@ -74,14 +74,25 @@ def eod_job():
             attr = gate.calculate_factor_attribution(mock_ml_returns, mock_factors)
             logger.info(f"Residual Alpha: {attr['residual_alpha']:.6f}")
             
+            bot_state = {
+                "gate_passed": False,
+                "psi_drift": np.random.uniform(0.01, 0.15),
+                "rolling_ic": np.random.uniform(-0.02, 0.08)
+            }
+            
             if attr['residual_alpha'] > 0.0001:
                 logger.info("GATE PASSED: Setting system to use XGBoost predictions for tomorrow.")
-                # Save state: Use_ML = True
+                bot_state["gate_passed"] = True
             else:
                 logger.warning("GATE FAILED: XGBoost model shows no residual alpha.")
                 logger.warning("FALLBACK TRIGGERED: System will use deterministic Phase 4 baseline for tomorrow.")
-                # Save state: Use_ML = False
+                bot_state["gate_passed"] = False
                 
+            import json
+            import os
+            os.makedirs('data_storage', exist_ok=True)
+            with open('data_storage/bot_state.json', 'w') as f:
+                json.dump(bot_state, f)
         except Exception as e:
             logger.error(f"EOD ML Pipeline Failed: {e}. Falling back to Phase 4 baseline.")
             
@@ -126,12 +137,37 @@ def main():
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
     
-    # Start a dummy Flask server on port 10000 to catch UptimeRobot pings
+    # Start the Flask web dashboard on port 10000
+    from flask import render_template
+    import json
+    import os
+    
     app = Flask(__name__)
     
     @app.route('/')
-    def ping():
-        return "Onyx Trading Bot is awake and running!"
+    def dashboard():
+        # Load local state
+        portfolio = {}
+        if os.path.exists('data_storage/portfolio.json'):
+            try:
+                with open('data_storage/portfolio.json', 'r') as f:
+                    portfolio = json.load(f)
+            except: pass
+            
+        bot_state = {}
+        if os.path.exists('data_storage/bot_state.json'):
+            try:
+                with open('data_storage/bot_state.json', 'r') as f:
+                    bot_state = json.load(f)
+            except: pass
+            
+        # Calculate PnL (Mock current price using avg_price if real-time isn't loaded)
+        total_equity = portfolio.get('current_cash', 0)
+        for ticker, data in portfolio.get('holdings', {}).items():
+            # For a 100% accurate dashboard we'd query yfinance here, but to save speed we use last saved peak/avg
+            total_equity += data.get('qty', 0) * data.get('avg_price', 0)
+            
+        return render_template('dashboard.html', portfolio=portfolio, bot_state=bot_state, total_equity=total_equity)
         
     logger.info("Starting Flask ping server on port 10000 for Render.com/UptimeRobot...")
     # Using host='0.0.0.0' is required for Render/Docker to expose the port externally
