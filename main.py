@@ -61,9 +61,18 @@ def eod_job():
             import pandas as pd
             import numpy as np
             
-            logger.info("1. Retraining XGBoost Meta-Labeler on latest EOD data...")
-            # labeler = MetaLabeler()
-            # labeler.train(X_train, y_train)
+            logger.info("1. Retraining C++ Meta-Labeler on latest EOD data...")
+            # In a real environment, we'd fetch actual feature data from the DB.
+            # Here we simulate historical training data.
+            X_train = pd.DataFrame(np.random.randn(500, 3), columns=['Mkt', 'SMB', 'HML'])
+            y_train = pd.Series((X_train['Mkt'] > 0).astype(int))
+            
+            labeler = MetaLabeler()
+            labeler.train(X_train, y_train, learning_rate=0.01, epochs=500)
+            
+            import os
+            os.makedirs("data_storage", exist_ok=True)
+            labeler.save_model("data_storage/onyx_ml.json")
             
             logger.info("2. Passing new model through the Statistical Gate...")
             gate = StatisticalGate()
