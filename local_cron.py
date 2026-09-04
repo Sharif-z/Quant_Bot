@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 # Load secret token
 load_dotenv()
 CRON_SECRET = os.getenv("CRON_SECRET", "onyx_default_secret")
-# Put your live render URL here once deployed
-# For local testing, we use the local flask server
-RENDER_URL = os.getenv("RENDER_URL", "http://127.0.0.1:10000") 
+
+# This is your live production bot on Render!
+RENDER_URL = os.getenv("RENDER_URL", "https://quant-bot-ntcm.onrender.com") 
 
 IST = pytz.timezone('Asia/Kolkata')
 
