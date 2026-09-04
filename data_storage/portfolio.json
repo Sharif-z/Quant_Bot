@@ -1,32 +1,74 @@
 {
     "initial_cash": 10000000.0,
-    "current_cash": 25760107.66876343,
+    "current_cash": 752898.8263373114,
     "holdings": {
         "RELIANCE": {
-            "qty": 40,
-            "avg_price": 2195.48392275792,
+            "qty": 3462,
+            "avg_price": 2231.423578515006,
             "peak_price": 2472.203047911175
         },
         "HDFCBANK": {
-            "qty": 76,
-            "avg_price": 1454.2352631017723,
-            "peak_price": 1451.7045678829359
+            "qty": 1399,
+            "avg_price": 1865.5877230704627,
+            "peak_price": 1889.2179475282255
         },
         "TCS": {
-            "qty": 89,
-            "avg_price": 2440.9844295389553,
-            "peak_price": 2449.8516973148458
+            "qty": 1635,
+            "avg_price": 2963.4600896345555,
+            "peak_price": 2993.5379251769286
         },
         "ICICIBANK": {
-            "qty": 74,
-            "avg_price": 906.7905408445395,
-            "peak_price": 906.7905408445394
+            "qty": 2431,
+            "avg_price": 2269.6765322560623,
+            "peak_price": 2312.465485741193
         },
         "INFY": {
-            "qty": 116,
-            "avg_price": 2342.047788528984,
+            "qty": 5446,
+            "avg_price": 925.1944474064767,
             "peak_price": 2342.047788528984
         }
     },
-    "last_updated": "2026-09-04T06:23:37.295567"
+    "last_updated": "2026-09-04T07:56:13.022358",
+    "trade_history": [
+        {
+            "timestamp": "2026-09-04T07:56:13.019665",
+            "symbol": "RELIANCE",
+            "action": "BUY",
+            "qty": 3422,
+            "price": 2231.843679692762,
+            "value": 7637369.071908632
+        },
+        {
+            "timestamp": "2026-09-04T07:56:13.021109",
+            "symbol": "HDFCBANK",
+            "action": "BUY",
+            "qty": 1323,
+            "price": 1889.2179475282255,
+            "value": 2499435.3445798424
+        },
+        {
+            "timestamp": "2026-09-04T07:56:13.021691",
+            "symbol": "ICICIBANK",
+            "action": "BUY",
+            "qty": 2357,
+            "price": 2312.465485741193,
+            "value": 5450481.149891991
+        },
+        {
+            "timestamp": "2026-09-04T07:56:13.022053",
+            "symbol": "INFY",
+            "action": "BUY",
+            "qty": 5330,
+            "price": 894.3586148417091,
+            "value": 4766931.41710631
+        },
+        {
+            "timestamp": "2026-09-04T07:56:13.022354",
+            "symbol": "TCS",
+            "action": "BUY",
+            "qty": 1546,
+            "price": 2993.5379251769286,
+            "value": 4628009.632323531
+        }
+    ]
 }
