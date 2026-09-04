@@ -1,0 +1,32 @@
+{
+    "initial_cash": 10000000.0,
+    "current_cash": 25760107.66876343,
+    "holdings": {
+        "RELIANCE": {
+            "qty": 40,
+            "avg_price": 2195.48392275792,
+            "peak_price": 2472.203047911175
+        },
+        "HDFCBANK": {
+            "qty": 76,
+            "avg_price": 1454.2352631017723,
+            "peak_price": 1451.7045678829359
+        },
+        "TCS": {
+            "qty": 89,
+            "avg_price": 2440.9844295389553,
+            "peak_price": 2449.8516973148458
+        },
+        "ICICIBANK": {
+            "qty": 74,
+            "avg_price": 906.7905408445395,
+            "peak_price": 906.7905408445394
+        },
+        "INFY": {
+            "qty": 116,
+            "avg_price": 2342.047788528984,
+            "peak_price": 2342.047788528984
+        }
+    },
+    "last_updated": "2026-09-04T06:23:37.295567"
+}
