@@ -112,10 +112,32 @@ def main():
     logger.info("Bot is now in hibernation mode, waiting for scheduled tasks...")
     logger.info("RAM Usage during hibernation is virtually zero.")
     
-    # Infinite loop to keep the python script alive
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # Render.com Web Service Hack:
+    # Render requires a web server to bind to a port, otherwise the deployment fails.
+    # We move the infinite schedule loop into a background thread.
+    import threading
+    from flask import Flask
+    
+    def run_scheduler():
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+            
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+    
+    # Start a dummy Flask server on port 10000 to catch UptimeRobot pings
+    app = Flask(__name__)
+    
+    @app.route('/')
+    def ping():
+        return "Onyx Trading Bot is awake and running!"
+        
+    logger.info("Starting Flask ping server on port 10000 for Render.com/UptimeRobot...")
+    # Using host='0.0.0.0' is required for Render/Docker to expose the port externally
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == "__main__":
     main()
