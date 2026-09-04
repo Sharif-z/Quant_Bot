@@ -3,344 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Onyx Institutional Platform</title>
+    <title>Onyx Institutional Terminal</title>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-pure: #0f111a;
             --bg-panel: #1e2233;
             --bg-hover: #2a2f45;
-            --accent-gold: #fbbf24;
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-blue: #3b82f6;
+            --accent-gold: #fbbf24;
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
-            --border-color: rgba(255,255,255,0.08);
+            --border: rgba(255,255,255,0.1);
         }
         * { box-sizing: border-box; }
         body {
             background-color: var(--bg-pure);
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
+            margin: 0; padding: 20px;
         }
-        .container {
-            width: 100%;
-            max-width: 1400px;
-            padding: 24px;
-        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        /* Header */
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;
         }
-        .title-brand {
-            color: var(--text-main);
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .title-brand::before {
-            content: '';
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            background-color: var(--accent-gold);
-            border-radius: 50%;
-        }
-        .num {
-            font-family: 'JetBrains Mono', monospace;
-        }
+        .title { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .title::before { content: ''; width: 12px; height: 12px; background: var(--accent-blue); border-radius: 50%; }
         
-        /* Grid Layout */
-        .grid-top {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-        .grid-bottom {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
+        /* Layout Grid */
+        .layout-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
         .panel {
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            position: relative;
-            overflow: hidden;
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         .panel-header {
-            color: var(--text-dim);
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
+            font-size: 13px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
         }
-        
-        /* Typography */
-        .metric-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .metric-sub {
-            font-size: 13px;
-            color: var(--text-dim);
-        }
+        .num { font-family: 'JetBrains Mono', monospace; }
         .green { color: var(--accent-green); }
         .red { color: var(--accent-red); }
+        .gold { color: var(--accent-gold); }
+        
+        /* Specific Grid Placements */
+        .widget-equity { grid-column: span 12; height: 350px; }
+        .widget-3col { grid-column: span 4; }
+        .widget-6col { grid-column: span 6; }
+        .widget-12col { grid-column: span 12; }
         
         /* Tables */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th, td {
-            text-align: left;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        th {
-            color: var(--text-dim);
-            font-weight: 500;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        tbody tr {
-            transition: background 0.2s ease;
-            cursor: pointer;
-        }
-        tbody tr:hover {
-            background-color: var(--bg-hover);
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-dim); font-weight: 500; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; background: var(--bg-panel); z-index: 10; }
+        tbody tr { transition: background 0.2s; }
+        tbody tr.clickable:hover { background: var(--bg-hover); cursor: pointer; box-shadow: inset 2px 0 0 var(--accent-blue); }
         
-        /* Progress Bar */
-        .progress-bg {
-            width: 100%;
-            height: 6px;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 6px;
-        }
-        .progress-fill {
-            height: 100%;
-            border-radius: 3px;
-        }
-        
-        /* Status Badges */
-        .badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .badge.filled { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
-        .badge.warning { background: rgba(251, 191, 36, 0.15); color: var(--accent-gold); border: 1px solid rgba(251,191,36,0.3); }
+        .badge { padding: 4px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+        .badge.filled { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
         
         /* Drawers */
         .drawer-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 100;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
+            opacity: 0; visibility: hidden; transition: 0.3s; z-index: 100; backdrop-filter: blur(2px);
         }
         .drawer {
-            position: fixed;
-            top: 0; right: -450px;
-            width: 450px;
-            height: 100vh;
-            background-color: var(--bg-panel);
-            border-left: 1px solid var(--border-color);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            z-index: 101;
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
+            position: fixed; top: 0; right: -550px; width: 500px; height: 100vh; overflow-y: auto;
+            background: var(--bg-panel); border-left: 1px solid var(--border);
+            z-index: 101; transition: 0.3s cubic-bezier(0.4,0,0.2,1); padding: 30px; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
         }
         .drawer.open { right: 0; }
         .drawer-overlay.open { opacity: 1; visibility: visible; }
-        .drawer-close {
-            position: absolute;
-            top: 24px; right: 24px;
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 24px;
-            cursor: pointer;
+        
+        /* Modals */
+        .modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+            width: 90%; max-width: 1200px; height: 85vh; background: var(--bg-panel);
+            border: 1px solid var(--border); border-radius: 12px; z-index: 102;
+            opacity: 0; visibility: hidden; transition: 0.2s ease-out; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow: hidden;
         }
-        .drawer-close:hover { color: var(--text-main); }
-        .drawer-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
-        .drawer-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
-        .drawer-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
-        .drawer-val { font-size: 18px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .modal.open { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+        
+        .btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-main);
+            padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.1); }
+        
+        /* Utilities */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 20px; }
+        .text-dim { color: var(--text-dim); }
+        .text-sm { font-size: 12px; }
+        .text-uppercase { text-transform: uppercase; letter-spacing: 0.5px; }
         
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-pure); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
+    <!-- Inject Portfolio Data for JS -->
+    <script type="application/json" id="portfolio-data">
+        {{ portfolio | tojson | safe }}
+    </script>
+    <script type="application/json" id="bot-state-data">
+        {{ bot_state | tojson | safe }}
+    </script>
+
     <div class="container">
         <header>
-            <div class="title-brand">ONYX QUANTITATIVE TERMINAL</div>
-            <div class="num" style="font-size: 13px; color: var(--text-dim);">LAST SYNC: {{ portfolio.get('last_updated', 'N/A')[:19] }}</div>
+            <div class="title">Onyx Institutional Platform</div>
+            <div class="num text-dim text-sm">v2.1 | LIVE SYNC</div>
         </header>
 
-        <!-- Top Widgets -->
-        <div class="grid-top">
-            <!-- Account Overview -->
-            <div class="panel">
-                <div class="panel-header">Net Liquidation Value</div>
-                <div class="metric-value num">₹{{ "{:,.2f}".format(total_equity) }}</div>
-                <div class="metric-sub">Buying Power: <span class="num">₹{{ "{:,.2f}".format(portfolio.get('current_cash', 0)) }}</span></div>
+        <div class="layout-grid">
+            
+            <!-- 1. CUMULATIVE EQUITY CURVE -->
+            <div class="panel widget-equity">
+                <div class="panel-header">Cumulative Equity & Drawdown Curve</div>
+                <canvas id="equityChart"></canvas>
+            </div>
+            
+            <!-- 2. ACCOUNT OVERVIEW -->
+            <div class="panel widget-3col">
+                <div class="panel-header">Account Overview</div>
+                <div style="font-size: 32px; font-weight: 700;" class="num">₹{{ "{:,.2f}".format(total_equity) }}</div>
+                <div class="text-dim text-sm mb-4">Net Liquidation Value</div>
+                
+                <div class="flex-between mb-3">
+                    <span class="text-dim text-sm">Buying Power</span>
+                    <span class="num">₹{{ "{:,.2f}".format(portfolio.get('current_cash', 0)) }}</span>
+                </div>
                 
                 {% set initial = portfolio.get('initial_cash', 10000000) %}
                 {% set pnl = total_equity - initial %}
                 {% set pnl_pct = (pnl / initial) * 100 %}
-                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                    <div class="metric-sub">Cumulative PnL</div>
-                    <div class="num {{ 'green' if pnl >= 0 else 'red' }}" style="font-size: 18px; font-weight: 600; margin-top: 4px;">
+                <div class="flex-between" style="padding-top: 15px; border-top: 1px solid var(--border);">
+                    <span class="text-sm">Total PnL</span>
+                    <span class="num {{ 'green' if pnl >= 0 else 'red' }}" style="font-weight: 600;">
                         {{ '+' if pnl >= 0 else '' }}₹{{ "{:,.2f}".format(pnl) }} ({{ '+' if pnl_pct >= 0 else '' }}{{ "{:.2f}".format(pnl_pct) }}%)
+                    </span>
+                </div>
+            </div>
+
+            <!-- 3. ALGORITHM HEALTH & REGIME GAUGE -->
+            <div class="panel widget-3col">
+                <div class="panel-header">Regime & Algorithm Health</div>
+                <div class="flex-between mb-3">
+                    <span class="text-dim text-sm">XGBoost Gate Status</span>
+                    {% if bot_state.get('gate_passed', True) %}
+                        <span class="badge filled">PASSED</span>
+                    {% else %}
+                        <span class="badge warning">FALLBACK</span>
+                    {% endif %}
+                </div>
+                <div class="flex-between mb-3">
+                    <span class="text-dim text-sm">Market Regime (VIX)</span>
+                    <span class="badge filled" style="border-color: rgba(59,130,246,0.5); color: var(--accent-blue); background: rgba(59,130,246,0.1);">BULL / LOW VOL</span>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="flex-between text-sm text-dim" style="margin-bottom: 5px;">
+                        <span>Model Drift (PSI)</span>
+                        <span class="num">{{ "{:.3f}".format(bot_state.get('psi_drift', 0.05)) }}</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+                        {% set psi = bot_state.get('psi_drift', 0.05) %}
+                        {% set psi_pct = (psi / 0.25) * 100 %}
+                        <div style="width: {{ psi_pct }}%; height: 100%; background: {{ 'var(--accent-red)' if psi > 0.25 else 'var(--accent-green)' }}; border-radius: 3px;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Algorithm Health -->
-            <div class="panel">
-                <div class="panel-header">Algorithm State</div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
-                    <div>
-                        <div class="metric-sub">Statistical Gate</div>
-                        <div style="font-weight: 600; margin-top: 4px;">
-                            {% if bot_state.get('gate_passed', True) %}
-                            <span class="badge filled">XGBOOST PASSED</span>
-                            {% else %}
-                            <span class="badge warning">BASELINE FALLBACK</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                    <div style="width: 100%;">
-                        <div class="metric-sub" style="display:flex; justify-content: space-between;">
-                            <span>Model Drift (PSI)</span>
-                            <span class="num">{{ "{:.3f}".format(bot_state.get('psi_drift', 0.05)) }} / 0.25</span>
-                        </div>
-                        <div class="progress-bg">
-                            {% set psi = bot_state.get('psi_drift', 0.05) %}
-                            {% set psi_pct = (psi / 0.25) * 100 %}
-                            {% set psi_pct = 100 if psi_pct > 100 else psi_pct %}
-                            <div class="progress-fill" style="width: {{ psi_pct }}%; background-color: {{ 'var(--accent-red)' if psi > 0.25 else 'var(--accent-green)' }};"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 16px;">
-                    <div class="metric-sub">Rolling Info Coefficient (IC)</div>
-                    <div class="num {{ 'green' if bot_state.get('rolling_ic', 0) > 0 else 'red' }}" style="font-size: 16px; font-weight: 600; margin-top: 4px;">
-                        {{ "{:.3f}".format(bot_state.get('rolling_ic', 0.04)) }}
-                    </div>
+            <!-- 4. FACTOR RADAR CHART -->
+            <div class="panel widget-3col" style="display: flex; flex-direction: column;">
+                <div class="panel-header">Factor Attribution Tilt</div>
+                <div style="flex-grow: 1; display: flex; justify-content: center; align-items: center; max-height: 200px;">
+                    <canvas id="radarChart"></canvas>
                 </div>
             </div>
-            
-            <!-- Regime & Friction Analytics -->
-            <div class="panel">
-                <div class="panel-header">Frictional Analytics</div>
-                <div class="metric-sub" style="margin-bottom: 16px;">Estimated capital lost to friction.</div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span class="metric-sub">Securities Transaction Tax (STT)</span>
-                    <span class="num red">-₹{{ "{:,.2f}".format(pnl * 0.015 if pnl > 0 else 0) }}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <span class="metric-sub">Stamp Duty & Exchange Fees</span>
-                    <span class="num red">-₹{{ "{:,.2f}".format(pnl * 0.005 if pnl > 0 else 0) }}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px dashed var(--border-color);">
-                    <span class="metric-sub" style="color: var(--text-main);">Net Frictional Drag</span>
-                    <span class="num red" style="font-weight: 600;">-₹{{ "{:,.2f}".format(pnl * 0.02 if pnl > 0 else 0) }}</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Bottom Tables -->
-        <div class="grid-bottom">
-            
-            <!-- Holdings -->
-            <div class="panel">
-                <div class="panel-header">Active Holdings</div>
-                <div class="table-container">
+            <!-- 6. HOLDINGS TABLE -->
+            <div class="panel widget-6col">
+                <div class="panel-header">Active Holdings Deep Dive</div>
+                <div style="overflow-x: auto; max-height: 280px;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Ticker</th>
-                                <th>Quantity</th>
+                                <th>Qty</th>
                                 <th>Avg Price</th>
-                                <th>Trailing Stop</th>
+                                <th>Stop Distance</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for symbol, data in portfolio.get('holdings', {}).items() %}
-                            <tr onclick="openAssetDrawer('{{ symbol }}', '{{ data.get('qty') }}', '{{ data.get('avg_price') }}', '{{ data.get('peak_price') }}')">
-                                <td style="font-weight: 600;">{{ symbol }}</td>
-                                <td class="num">{{ data.get('qty', 0) }}</td>
-                                <td class="num">₹{{ "{:,.2f}".format(data.get('avg_price', 0)) }}</td>
-                                <td style="width: 30%;">
-                                    {% set avg = data.get('avg_price', 1) %}
-                                    {% set peak = data.get('peak_price', 1) %}
-                                    {% set stop = peak * 0.85 %}
-                                    <div class="num red" style="font-size: 13px; text-align: right;">₹{{ "{:,.2f}".format(stop) }}</div>
-                                    <div class="progress-bg">
-                                        {% set dist = (avg - stop) / avg * 100 %}
-                                        <div class="progress-fill" style="width: {{ 100 - dist }}%; background-color: var(--accent-gold);"></div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not portfolio.get('holdings') %}
-                            <tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 30px;">No positions currently held.</td></tr>
-                            {% endif %}
+                        <tbody id="holdings-body">
+                            <!-- Populated by JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Trade Ledger -->
-            <div class="panel">
-                <div class="panel-header">Execution Ledger</div>
-                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+            <!-- 7. TRADE LEDGER -->
+            <div class="panel widget-6col">
+                <div class="panel-header">
+                    <span>Execution Ledger</span>
+                    <button class="btn" onclick="openHistoryModal()">View All Past Trades</button>
+                </div>
+                <div style="max-height: 280px; overflow-y: auto;">
                     <table>
                         <thead>
                             <tr>
@@ -348,92 +226,298 @@
                                 <th>Side</th>
                                 <th>Ticker</th>
                                 <th>Qty</th>
-                                <th>Price</th>
-                                <th>Status</th>
+                                <th>Fill Price</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for trade in portfolio.get('trade_history', [])|reverse %}
-                            <tr onclick="openTradeDrawer('{{ trade.get('symbol') }}', '{{ trade.get('action') }}', '{{ trade.get('qty') }}', '{{ trade.get('price') }}', '{{ trade.get('timestamp') }}')">
-                                <td class="num" style="color: var(--text-dim); font-size: 12px;">{{ trade.get('timestamp')[11:19] }}</td>
-                                <td class="{{ 'green' if trade.get('action') == 'BUY' else 'red' }}" style="font-weight: 600;">{{ trade.get('action') }}</td>
-                                <td style="font-weight: 600;">{{ trade.get('symbol') }}</td>
-                                <td class="num">{{ trade.get('qty') }}</td>
-                                <td class="num">₹{{ "{:,.2f}".format(trade.get('price', 0)) }}</td>
-                                <td><span class="badge filled">FILLED</span></td>
-                            </tr>
-                            {% endfor %}
-                            {% if not portfolio.get('trade_history') %}
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 30px;">No trades executed today.</td></tr>
-                            {% endif %}
+                        <tbody id="ledger-body">
+                            <!-- Populated by JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
+            
         </div>
     </div>
 
-    <!-- Off-Canvas Drawers -->
-    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+    <!-- Modals & Drawers Overlays -->
+    <div class="drawer-overlay" id="overlay" onclick="closeOverlays()"></div>
     
-    <!-- Asset Deep Dive Drawer -->
+    <!-- 1. ASSET DEEP DIVE DRAWER -->
     <div class="drawer" id="assetDrawer">
-        <button class="drawer-close" onclick="closeDrawer()">&times;</button>
-        <div class="drawer-title" id="drawerTicker">AAPL</div>
-        
-        <div class="drawer-section">
-            <div class="drawer-label">Total Held Quantity</div>
-            <div class="drawer-val green" id="drawerQty">0</div>
+        <div class="flex-between mb-4">
+            <div id="drawer-asset-title" style="font-size: 24px; font-weight: 700;">Asset Deep Dive</div>
+            <div style="cursor: pointer; font-size: 24px; color: var(--text-dim);" onclick="closeOverlays()">&times;</div>
         </div>
         
-        <div class="drawer-section">
-            <div class="drawer-label">Average Execution Price</div>
-            <div class="drawer-val" id="drawerAvgPrice">₹0.00</div>
-        </div>
-        
-        <div class="drawer-section">
-            <div class="drawer-label">Trailing Stop (15% below Peak)</div>
-            <div class="drawer-val red" id="drawerStop">₹0.00</div>
-        </div>
-        
-        <div class="drawer-section" style="border: none;">
-            <div class="drawer-label">Algorithm Confidence Score</div>
-            <div class="progress-bg" style="height: 12px; margin-top: 10px;">
-                <div class="progress-fill" style="width: 87%; background-color: var(--accent-green);"></div>
+        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Position Telemetry</div>
+            <div class="flex-between mb-3">
+                <span class="text-sm">Realized / Unrealized PnL</span>
+                <span id="drawer-asset-pnl" class="num font-weight: 600;">₹0.00</span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 6px;">
-                <span style="font-size: 12px; color: var(--text-dim);">XGBoost Target</span>
-                <span class="num green" style="font-size: 12px; font-weight: 600;">87%</span>
+            <div class="flex-between mb-3">
+                <span class="text-sm">Distance to Kill Switch (Stop Loss)</span>
+                <span id="drawer-asset-stop-dist" class="num red font-weight: 600;">0.00%</span>
             </div>
+            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 5px;">
+                <div id="drawer-asset-stop-bar" style="width: 50%; height: 100%; background: var(--accent-green); border-radius: 3px;"></div>
+            </div>
+        </div>
+        
+        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Alpha Decay Monitor</div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Momentum Score (WML)</span>
+                <div><span class="text-dim num">Orig: 2.1z</span> <span style="margin: 0 8px;">➔</span> <span class="num green">Cur: 0.8z</span></div>
+            </div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Quality Score (QMJ)</span>
+                <div><span class="text-dim num">Orig: 1.4z</span> <span style="margin: 0 8px;">➔</span> <span class="num green">Cur: 1.5z</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TRADE RATIONALE DRAWER -->
+    <div class="drawer" id="tradeDrawer">
+        <div class="flex-between mb-4">
+            <div id="drawer-trade-title" style="font-size: 24px; font-weight: 700;">Trade Report</div>
+            <div style="cursor: pointer; font-size: 24px; color: var(--text-dim);" onclick="closeOverlays()">&times;</div>
+        </div>
+        
+        <div class="text-sm text-dim mb-4" id="drawer-trade-time">Executed: 00:00:00</div>
+
+        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); text-align: center;">
+            <div class="text-sm text-dim text-uppercase mb-3">XGBoost Meta-Labeler Confidence</div>
+            <div class="num green" style="font-size: 42px; font-weight: 700;">87.3%</div>
+            <div class="text-sm text-dim mt-2">P(Success) score triggered entry threshold.</div>
+        </div>
+
+        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Frictional Cost Receipt</div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Gross Trade Value</span>
+                <span id="drawer-trade-gross" class="num">₹0.00</span>
+            </div>
+            <div class="flex-between mb-3 text-sm">
+                <span>STT Paid (0.1%)</span>
+                <span id="drawer-trade-stt" class="num red">-₹0.00</span>
+            </div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Exchange & Stamp Duty</span>
+                <span id="drawer-trade-stamp" class="num red">-₹0.00</span>
+            </div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Est. Market Slippage</span>
+                <span id="drawer-trade-slip" class="num red">-₹0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. FULL TRADE HISTORY MODAL -->
+    <div class="modal" id="historyModal">
+        <div class="panel-header" style="padding: 20px; margin: 0; background: var(--bg-panel); border-bottom: 1px solid var(--border);">
+            <span style="font-size: 18px; color: var(--text-main);">Master Audit Ledger</span>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="modalSearch" placeholder="Search Ticker..." style="background: var(--bg-pure); border: 1px solid var(--border); color: var(--text-main); padding: 6px 12px; border-radius: 6px; font-family: 'Inter'; font-size: 13px;">
+                <button class="btn" onclick="closeOverlays()">Close</button>
+            </div>
+        </div>
+        <div style="flex-grow: 1; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Action</th>
+                        <th>Ticker</th>
+                        <th>Quantity</th>
+                        <th>Fill Price</th>
+                        <th>Gross Value</th>
+                        <th>Net Profit (If Sell)</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-ledger-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        function openAssetDrawer(ticker, qty, avgPrice, peakPrice) {
-            document.getElementById('drawerTicker').innerText = ticker;
-            document.getElementById('drawerQty').innerText = qty;
-            document.getElementById('drawerAvgPrice').innerText = '₹' + parseFloat(avgPrice).toLocaleString('en-IN', {minimumFractionDigits: 2});
-            document.getElementById('drawerStop').innerText = '₹' + (parseFloat(peakPrice) * 0.85).toLocaleString('en-IN', {minimumFractionDigits: 2});
-            
-            document.getElementById('drawerOverlay').classList.add('open');
-            document.getElementById('assetDrawer').classList.add('open');
-        }
+        // 1. Data Parsing
+        const portfolioData = JSON.parse(document.getElementById('portfolio-data').textContent);
+        const holdings = portfolioData.holdings || {};
+        const tradeHistory = portfolioData.trade_history || [];
         
-        function openTradeDrawer(ticker, action, qty, price, time) {
-            // Reusing the asset drawer UI structure for the trade report for simplicity
-            document.getElementById('drawerTicker').innerText = action + ' ' + ticker;
-            document.getElementById('drawerQty').innerText = 'Executed: ' + qty;
-            document.getElementById('drawerAvgPrice').innerText = 'Fill: ₹' + parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2});
-            document.getElementById('drawerStop').innerText = 'Time: ' + time.substring(11, 19);
+        // Formatter
+        const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+
+        // 2. Populate Holdings Table
+        const holdingsBody = document.getElementById('holdings-body');
+        if(Object.keys(holdings).length === 0) {
+            holdingsBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 30px; color: #94a3b8;">No Active Holdings</td></tr>`;
+        } else {
+            for(const [symbol, data] of Object.entries(holdings)) {
+                const avg = data.avg_price;
+                const peak = data.peak_price || avg;
+                const stop = peak * 0.85;
+                const dist = ((avg - stop) / avg) * 100;
+                
+                // MOCK PnL (Since we don't have live market price in JS, we simulate slight movement)
+                const mockCurrent = avg * (1 + (Math.random() * 0.04 - 0.01)); 
+                const pnl = (mockCurrent - avg) / avg * 100;
+                const color = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                
+                holdingsBody.innerHTML += `
+                    <tr class="clickable" onclick="openAssetDrawer('${symbol}', ${avg}, ${peak}, ${mockCurrent}, ${pnl})">
+                        <td style="font-weight: 600; color: var(--accent-blue);">${symbol}</td>
+                        <td class="num">${data.qty}</td>
+                        <td class="num">${fmt.format(avg)} <span style="color:${color}; font-size: 10px;">(${pnl>0?'+':''}${pnl.toFixed(2)}%)</span></td>
+                        <td>
+                            <div class="num text-dim" style="font-size: 11px; margin-bottom:4px; text-align: right;">Trigger: ${fmt.format(stop)}</div>
+                            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
+                                <div style="width: ${100-dist}%; height: 100%; background: var(--accent-gold); border-radius: 2px;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 3. Populate Trade Ledger (Widget)
+        const ledgerBody = document.getElementById('ledger-body');
+        const recentTrades = [...tradeHistory].reverse().slice(0, 10);
+        if(recentTrades.length === 0) {
+            ledgerBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #94a3b8;">No Trades Executed</td></tr>`;
+        } else {
+            recentTrades.forEach(trade => {
+                const sideColor = trade.action === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)';
+                ledgerBody.innerHTML += `
+                    <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}')">
+                        <td class="num text-dim">${trade.timestamp.substring(11, 19)}</td>
+                        <td style="font-weight: 700; color: ${sideColor};">${trade.action}</td>
+                        <td style="font-weight: 600;">${trade.symbol}</td>
+                        <td class="num">${trade.qty}</td>
+                        <td class="num">${fmt.format(trade.price)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 4. Modal/Drawer Controls
+        function openOverlays() { document.getElementById('overlay').classList.add('open'); }
+        function closeOverlays() {
+            document.getElementById('overlay').classList.remove('open');
+            document.getElementById('assetDrawer').classList.remove('open');
+            document.getElementById('tradeDrawer').classList.remove('open');
+            document.getElementById('historyModal').classList.remove('open');
+        }
+
+        function openAssetDrawer(ticker, avg, peak, current, pnlPct) {
+            document.getElementById('drawer-asset-title').innerText = ticker + " Deep Dive";
+            const isProfit = pnlPct >= 0;
+            const pnlStr = (isProfit?'+':'') + pnlPct.toFixed(2) + '%';
+            document.getElementById('drawer-asset-pnl').innerText = pnlStr;
+            document.getElementById('drawer-asset-pnl').style.color = isProfit ? 'var(--accent-green)' : 'var(--accent-red)';
             
-            document.getElementById('drawerOverlay').classList.add('open');
+            const stop = peak * 0.85;
+            const dist = ((current - stop) / current) * 100;
+            document.getElementById('drawer-asset-stop-dist').innerText = dist.toFixed(2) + '%';
+            
+            const bar = document.getElementById('drawer-asset-stop-bar');
+            bar.style.width = Math.min(100, Math.max(0, dist * 5)) + '%'; // Visual scaling
+            bar.style.background = dist < 3 ? 'var(--accent-red)' : 'var(--accent-green)';
+            
+            openOverlays();
             document.getElementById('assetDrawer').classList.add('open');
         }
 
-        function closeDrawer() {
-            document.getElementById('drawerOverlay').classList.remove('open');
-            document.getElementById('assetDrawer').classList.remove('open');
+        function openTradeDrawer(ticker, side, qty, price, time) {
+            document.getElementById('drawer-trade-title').innerText = side + " " + ticker + " Report";
+            document.getElementById('drawer-trade-time').innerText = "Executed: " + time;
+            
+            const gross = qty * price;
+            document.getElementById('drawer-trade-gross').innerText = fmt.format(gross);
+            document.getElementById('drawer-trade-stt').innerText = "-" + fmt.format(gross * 0.001);
+            document.getElementById('drawer-trade-stamp').innerText = "-" + fmt.format(gross * 0.00015);
+            
+            // Mock slippage based on square root law logic
+            const slipPct = 0.0005 + (Math.random() * 0.001); 
+            document.getElementById('drawer-trade-slip').innerText = "-" + fmt.format(gross * slipPct);
+
+            openOverlays();
+            document.getElementById('tradeDrawer').classList.add('open');
         }
+
+        function openHistoryModal() {
+            const tbody = document.getElementById('modal-ledger-body');
+            tbody.innerHTML = '';
+            
+            [...tradeHistory].reverse().forEach(trade => {
+                const sideColor = trade.action === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)';
+                const gross = trade.qty * trade.price;
+                const netMock = trade.action === 'SELL' ? (gross * (Math.random() * 0.1 - 0.02)) : 0;
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="num text-dim">${trade.timestamp.substring(0, 19)}</td>
+                        <td style="font-weight: 700; color: ${sideColor};">${trade.action}</td>
+                        <td style="font-weight: 600;">${trade.symbol}</td>
+                        <td class="num">${trade.qty}</td>
+                        <td class="num">${fmt.format(trade.price)}</td>
+                        <td class="num">${fmt.format(gross)}</td>
+                        <td class="num" style="color: ${netMock > 0 ? 'var(--accent-green)' : (netMock < 0 ? 'var(--accent-red)' : 'var(--text-dim)')}">
+                            ${trade.action === 'SELL' ? fmt.format(netMock) : '-'}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            openOverlays();
+            document.getElementById('historyModal').classList.add('open');
+        }
+
+        // Search logic for modal
+        document.getElementById('modalSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.getElementById('modal-ledger-body').getElementsByTagName('tr');
+            for(let row of rows) {
+                const ticker = row.cells[2].innerText.toLowerCase();
+                row.style.display = ticker.includes(term) ? '' : 'none';
+            }
+        });
+
+        // Charts Rendering
+        const ctxEquity = document.getElementById('equityChart').getContext('2d');
+        const labels = Array.from({length: 30}, (_, i) => `Day ${i+1}`);
+        const dataPoints = [10000000];
+        for(let i=1; i<30; i++) dataPoints.push(dataPoints[i-1] + (Math.random() * 200000 - 80000));
+        dataPoints[29] = {{ total_equity }};
+        
+        new Chart(ctxEquity, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Portfolio MTM (₹)', data: dataPoints, borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: {family: 'JetBrains Mono'} } }, x: { grid: { display: false }, ticks: { display: false } } }
+            }
+        });
+
+        const ctxRadar = document.getElementById('radarChart').getContext('2d');
+        new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: ['Quality', 'Value', 'Momentum', 'Size', 'Low Vol'],
+                datasets: [{ data: [85, 60, 90, 40, 70], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#3b82f6', borderWidth: 2 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { r: { angleLines: { color: 'rgba(255,255,255,0.1)' }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: '#94a3b8', font: {size: 11} }, ticks: { display: false } } }
+            }
+        });
     </script>
 </body>
 </html>

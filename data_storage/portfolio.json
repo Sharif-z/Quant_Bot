@@ -1,34 +1,34 @@
 {
     "initial_cash": 10000000.0,
-    "current_cash": 752898.8263373114,
+    "current_cash": 25216196.962882753,
     "holdings": {
         "RELIANCE": {
-            "qty": 3462,
+            "qty": 100,
             "avg_price": 2231.423578515006,
             "peak_price": 2472.203047911175
         },
         "HDFCBANK": {
-            "qty": 1399,
+            "qty": 85,
             "avg_price": 1865.5877230704627,
             "peak_price": 1889.2179475282255
         },
         "TCS": {
-            "qty": 1635,
+            "qty": 68,
             "avg_price": 2963.4600896345555,
             "peak_price": 2993.5379251769286
         },
         "ICICIBANK": {
-            "qty": 2431,
+            "qty": 91,
             "avg_price": 2269.6765322560623,
             "peak_price": 2312.465485741193
         },
         "INFY": {
-            "qty": 5446,
+            "qty": 91,
             "avg_price": 925.1944474064767,
             "peak_price": 2342.047788528984
         }
     },
-    "last_updated": "2026-09-04T07:56:13.022358",
+    "last_updated": "2026-09-04T08:28:01.167783",
     "trade_history": [
         {
             "timestamp": "2026-09-04T07:56:13.019665",
@@ -69,6 +69,46 @@
             "qty": 1546,
             "price": 2993.5379251769286,
             "value": 4628009.632323531
+        },
+        {
+            "timestamp": "2026-09-04T08:28:01.153867",
+            "symbol": "RELIANCE",
+            "action": "SELL",
+            "qty": 3362,
+            "price": 1494.8164023406246,
+            "value": 5025572.744669179
+        },
+        {
+            "timestamp": "2026-09-04T08:28:01.157841",
+            "symbol": "HDFCBANK",
+            "action": "SELL",
+            "qty": 1314,
+            "price": 1184.2127667548607,
+            "value": 1556055.575515887
+        },
+        {
+            "timestamp": "2026-09-04T08:28:01.159235",
+            "symbol": "ICICIBANK",
+            "action": "SELL",
+            "qty": 2340,
+            "price": 1487.812112207976,
+            "value": 3481480.342566664
+        },
+        {
+            "timestamp": "2026-09-04T08:28:01.163177",
+            "symbol": "INFY",
+            "action": "SELL",
+            "qty": 5355,
+            "price": 1855.0995881138172,
+            "value": 9934058.294349492
+        },
+        {
+            "timestamp": "2026-09-04T08:28:01.167599",
+            "symbol": "TCS",
+            "action": "SELL",
+            "qty": 1567,
+            "price": 2865.7427985747863,
+            "value": 4490618.96536669
         }
     ]
 }
