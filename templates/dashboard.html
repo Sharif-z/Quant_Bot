@@ -6,20 +6,18 @@
     <title>Onyx Institutional Terminal</title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-pure: #0f111a;
-            --bg-panel: #1e2233;
-            --bg-hover: #2a2f45;
+            /* Strict Black Theme - NO BLUE */
+            --bg-pure: #000000;
+            --bg-panel: #111111;
+            --bg-hover: #1a1a1a;
             --accent-green: #10b981;
             --accent-red: #ef4444;
-            --accent-blue: #3b82f6;
             --accent-gold: #fbbf24;
             --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --border: rgba(255,255,255,0.1);
+            --text-dim: #888888;
+            --border: #333333;
         }
         * { box-sizing: border-box; }
         body {
@@ -36,16 +34,16 @@
             border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;
         }
         .title { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        .title::before { content: ''; width: 12px; height: 12px; background: var(--accent-blue); border-radius: 50%; }
+        .title::before { content: ''; width: 12px; height: 12px; background: var(--accent-gold); border-radius: 50%; }
         
         /* Layout Grid */
         .layout-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
         .panel {
             background: var(--bg-panel); border: 1px solid var(--border);
-            border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border-radius: 8px; padding: 20px;
         }
         .panel-header {
-            font-size: 13px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
         }
         .num { font-family: 'JetBrains Mono', monospace; }
         .green { color: var(--accent-green); }
@@ -53,49 +51,71 @@
         .gold { color: var(--accent-gold); }
         
         /* Specific Grid Placements */
-        .widget-equity { grid-column: span 12; height: 350px; }
-        .widget-3col { grid-column: span 4; }
+        .widget-3col { grid-column: span 3; }
+        .widget-4col { grid-column: span 4; }
+        .widget-5col { grid-column: span 5; }
         .widget-6col { grid-column: span 6; }
-        .widget-12col { grid-column: span 12; }
+        
+        /* Calendar Specifics */
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+        }
+        .calendar-day-header {
+            text-align: center; font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; padding-bottom: 5px;
+        }
+        .calendar-cell {
+            background: #1a1a1a; border-radius: 4px; padding: 6px; display: flex; flex-direction: column; justify-content: space-between; height: 50px; border: 1px solid transparent; transition: 0.2s;
+        }
+        .calendar-cell:hover { border-color: var(--text-dim); }
+        .calendar-date { font-size: 10px; color: var(--text-dim); }
+        .calendar-pnl { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; text-align: right; }
+        .calendar-cell.profit { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); }
+        .calendar-cell.loss { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); }
+        .calendar-cell.profit .calendar-pnl { color: var(--accent-green); }
+        .calendar-cell.loss .calendar-pnl { color: var(--accent-red); }
         
         /* Tables */
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
         th { color: var(--text-dim); font-weight: 500; text-transform: uppercase; font-size: 11px; position: sticky; top: 0; background: var(--bg-panel); z-index: 10; }
         tbody tr { transition: background 0.2s; }
-        tbody tr.clickable:hover { background: var(--bg-hover); cursor: pointer; box-shadow: inset 2px 0 0 var(--accent-blue); }
+        tbody tr.clickable:hover { background: var(--bg-hover); cursor: pointer; box-shadow: inset 2px 0 0 var(--accent-gold); }
         
-        .badge { padding: 4px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
-        .badge.filled { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; border: 1px solid var(--border); }
+        .badge.filled { color: var(--accent-green); border-color: var(--accent-green); }
+        .badge.warning { color: var(--accent-gold); border-color: var(--accent-gold); }
         
-        /* Drawers */
+        /* Drawers & Modals (Z-INDEX FIXED) */
         .drawer-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
-            opacity: 0; visibility: hidden; transition: 0.3s; z-index: 100; backdrop-filter: blur(2px);
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8);
+            opacity: 0; visibility: hidden; transition: 0.3s; z-index: 104;
         }
         .drawer {
-            position: fixed; top: 0; right: -550px; width: 500px; height: 100vh; overflow-y: auto;
+            position: fixed; top: 0; right: -600px; width: 600px; height: 100vh; overflow-y: auto;
             background: var(--bg-panel); border-left: 1px solid var(--border);
-            z-index: 101; transition: 0.3s cubic-bezier(0.4,0,0.2,1); padding: 30px; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 105; transition: 0.3s cubic-bezier(0.4,0,0.2,1); padding: 30px;
         }
         .drawer.open { right: 0; }
         .drawer-overlay.open { opacity: 1; visibility: visible; }
         
-        /* Modals */
         .modal {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
-            width: 90%; max-width: 1200px; height: 85vh; background: var(--bg-panel);
-            border: 1px solid var(--border); border-radius: 12px; z-index: 102;
-            opacity: 0; visibility: hidden; transition: 0.2s ease-out; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column; overflow: hidden;
+            position: fixed; top: 5%; left: 5%; width: 90%; height: 90%; background: var(--bg-pure);
+            border: 1px solid var(--border); border-radius: 8px; z-index: 102;
+            opacity: 0; visibility: hidden; transition: 0.2s; display: flex; flex-direction: column;
         }
-        .modal.open { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+        .modal.open { opacity: 1; visibility: visible; }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8);
+            opacity: 0; visibility: hidden; transition: 0.3s; z-index: 101;
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
         
         .btn {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-main);
-            padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s;
+            background: var(--bg-pure); border: 1px solid var(--border); color: var(--text-main);
+            padding: 8px 16px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
-        .btn:hover { background: rgba(255,255,255,0.1); }
+        .btn:hover { background: #222; border-color: var(--accent-gold); }
         
         /* Utilities */
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
@@ -107,58 +127,54 @@
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
 <body>
-    <!-- Inject Portfolio Data for JS -->
-    <script type="application/json" id="portfolio-data">
-        {{ portfolio | tojson | safe }}
-    </script>
-    <script type="application/json" id="bot-state-data">
-        {{ bot_state | tojson | safe }}
-    </script>
+    <script type="application/json" id="portfolio-data">{{ portfolio | tojson | safe }}</script>
+    <script type="application/json" id="bot-state-data">{{ bot_state | tojson | safe }}</script>
 
     <div class="container">
         <header>
-            <div class="title">Onyx Institutional Platform</div>
-            <div class="num text-dim text-sm">v2.1 | LIVE SYNC</div>
+            <div class="title">ONYX TRADING BOT</div>
+            <div class="num text-dim text-sm">STATUS: AWAKE & RUNNING</div>
         </header>
 
         <div class="layout-grid">
             
-            <!-- 1. CUMULATIVE EQUITY CURVE -->
-            <div class="panel widget-equity">
-                <div class="panel-header">Cumulative Equity & Drawdown Curve</div>
-                <canvas id="equityChart"></canvas>
-            </div>
-            
-            <!-- 2. ACCOUNT OVERVIEW -->
-            <div class="panel widget-3col">
-                <div class="panel-header">Account Overview</div>
-                <div style="font-size: 32px; font-weight: 700;" class="num">₹{{ "{:,.2f}".format(total_equity) }}</div>
-                <div class="text-dim text-sm mb-4">Net Liquidation Value</div>
-                
-                <div class="flex-between mb-3">
-                    <span class="text-dim text-sm">Buying Power</span>
-                    <span class="num">₹{{ "{:,.2f}".format(portfolio.get('current_cash', 0)) }}</span>
-                </div>
+            <!-- 1. ACCOUNT OVERVIEW (4-col) -->
+            <div class="panel widget-4col">
+                <div class="panel-header">Portfolio Equity</div>
+                <div style="font-size: 38px; font-weight: 700;" class="num gold">₹{{ "{:,.2f}".format(total_equity) }}</div>
+                <div class="text-dim text-sm mb-4">Total Account Value</div>
                 
                 {% set initial = portfolio.get('initial_cash', 10000000) %}
                 {% set pnl = total_equity - initial %}
                 {% set pnl_pct = (pnl / initial) * 100 %}
+                {% set margin_used = total_equity - portfolio.get('current_cash', 0) %}
+                
+                <div class="flex-between mb-3">
+                    <span class="text-dim text-sm">Total Capital (Initial)</span>
+                    <span class="num">₹{{ "{:,.2f}".format(initial) }}</span>
+                </div>
+                
+                <div class="flex-between mb-3">
+                    <span class="text-dim text-sm">Margin Used (Invested)</span>
+                    <span class="num" style="color: var(--text-main);">₹{{ "{:,.2f}".format(margin_used) }}</span>
+                </div>
+                
                 <div class="flex-between" style="padding-top: 15px; border-top: 1px solid var(--border);">
-                    <span class="text-sm">Total PnL</span>
-                    <span class="num {{ 'green' if pnl >= 0 else 'red' }}" style="font-weight: 600;">
+                    <span class="text-sm font-weight: 600;">Live PnL</span>
+                    <span class="num {{ 'green' if pnl >= 0 else 'red' }}" style="font-weight: 600; font-size: 16px;">
                         {{ '+' if pnl >= 0 else '' }}₹{{ "{:,.2f}".format(pnl) }} ({{ '+' if pnl_pct >= 0 else '' }}{{ "{:.2f}".format(pnl_pct) }}%)
                     </span>
                 </div>
             </div>
 
-            <!-- 3. ALGORITHM HEALTH & REGIME GAUGE -->
+            <!-- 2. ALGORITHM HEALTH (3-col) -->
             <div class="panel widget-3col">
-                <div class="panel-header">Regime & Algorithm Health</div>
+                <div class="panel-header">Algorithm Health</div>
                 <div class="flex-between mb-3">
                     <span class="text-dim text-sm">XGBoost Gate Status</span>
                     {% if bot_state.get('gate_passed', True) %}
@@ -168,41 +184,51 @@
                     {% endif %}
                 </div>
                 <div class="flex-between mb-3">
-                    <span class="text-dim text-sm">Market Regime (VIX)</span>
-                    <span class="badge filled" style="border-color: rgba(59,130,246,0.5); color: var(--accent-blue); background: rgba(59,130,246,0.1);">BULL / LOW VOL</span>
+                    <span class="text-dim text-sm">Information Coefficient</span>
+                    <span class="num green">{{ "{:.4f}".format(bot_state.get('rolling_ic', 0.0421)) }}</span>
                 </div>
                 <div style="margin-top: 20px;">
                     <div class="flex-between text-sm text-dim" style="margin-bottom: 5px;">
-                        <span>Model Drift (PSI)</span>
-                        <span class="num">{{ "{:.3f}".format(bot_state.get('psi_drift', 0.05)) }}</span>
+                        <span>Feature Drift (PSI)</span>
+                        <span class="num">{{ "{:.3f}".format(bot_state.get('psi_drift', 0.05)) }} / 0.25</span>
                     </div>
-                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+                    <div style="width: 100%; height: 4px; background: #222; border-radius: 2px;">
                         {% set psi = bot_state.get('psi_drift', 0.05) %}
                         {% set psi_pct = (psi / 0.25) * 100 %}
-                        <div style="width: {{ psi_pct }}%; height: 100%; background: {{ 'var(--accent-red)' if psi > 0.25 else 'var(--accent-green)' }}; border-radius: 3px;"></div>
+                        <div style="width: {{ psi_pct }}%; height: 100%; background: {{ 'var(--accent-red)' if psi > 0.25 else 'var(--accent-green)' }}; border-radius: 2px;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. FACTOR RADAR CHART -->
-            <div class="panel widget-3col" style="display: flex; flex-direction: column;">
-                <div class="panel-header">Factor Attribution Tilt</div>
-                <div style="flex-grow: 1; display: flex; justify-content: center; align-items: center; max-height: 200px;">
-                    <canvas id="radarChart"></canvas>
+            <!-- 3. DAILY PNL CALENDAR (5-col) -->
+            <div class="panel widget-5col">
+                <div class="panel-header" style="margin-bottom: 10px; padding-bottom: 5px;">
+                    <span>Daily Profit & Loss (This Month)</span>
+                    <span class="text-dim text-sm" id="calendar-month-name">Month</span>
                 </div>
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">Mon</div>
+                    <div class="calendar-day-header">Tue</div>
+                    <div class="calendar-day-header">Wed</div>
+                    <div class="calendar-day-header">Thu</div>
+                    <div class="calendar-day-header">Fri</div>
+                    <!-- Calendar cells populated by JS -->
+                </div>
+                <div id="calendar-cells" class="calendar-grid"></div>
             </div>
 
-            <!-- 6. HOLDINGS TABLE -->
+            <!-- 4. HOLDINGS TABLE (LIVE TRADES) -->
             <div class="panel widget-6col">
-                <div class="panel-header">Active Holdings Deep Dive</div>
-                <div style="overflow-x: auto; max-height: 280px;">
+                <div class="panel-header">Active Live Trades (Tap for More Info)</div>
+                <div style="overflow-x: auto; max-height: 400px;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Ticker</th>
                                 <th>Qty</th>
                                 <th>Avg Price</th>
-                                <th>Stop Distance</th>
+                                <th>Current Market Price</th>
+                                <th>Stop Loss</th>
                             </tr>
                         </thead>
                         <tbody id="holdings-body">
@@ -212,21 +238,21 @@
                 </div>
             </div>
 
-            <!-- 7. TRADE LEDGER -->
+            <!-- 5. RECENT EXECUTIONS -->
             <div class="panel widget-6col">
                 <div class="panel-header">
-                    <span>Execution Ledger</span>
-                    <button class="btn" onclick="openHistoryModal()">View All Past Trades</button>
+                    <span>Recent Executions (Tap for More Info)</span>
+                    <button class="btn" onclick="openHistoryModal()">OPEN FULL TRADE HISTORY</button>
                 </div>
-                <div style="max-height: 280px; overflow-y: auto;">
+                <div style="max-height: 400px; overflow-y: auto;">
                     <table>
                         <thead>
                             <tr>
                                 <th>Time</th>
                                 <th>Side</th>
                                 <th>Ticker</th>
-                                <th>Qty</th>
                                 <th>Fill Price</th>
+                                <th>Trade PnL</th>
                             </tr>
                         </thead>
                         <tbody id="ledger-body">
@@ -240,74 +266,118 @@
     </div>
 
     <!-- Modals & Drawers Overlays -->
-    <div class="drawer-overlay" id="overlay" onclick="closeOverlays()"></div>
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
     
-    <!-- 1. ASSET DEEP DIVE DRAWER -->
+    <!-- 1. LIVE TRADE DEEP DIVE (ASSET DRAWER) -->
     <div class="drawer" id="assetDrawer">
         <div class="flex-between mb-4">
-            <div id="drawer-asset-title" style="font-size: 24px; font-weight: 700;">Asset Deep Dive</div>
-            <div style="cursor: pointer; font-size: 24px; color: var(--text-dim);" onclick="closeOverlays()">&times;</div>
+            <div id="drawer-asset-title" style="font-size: 26px; font-weight: 700; color: var(--accent-gold);">LIVE TRADE DETAILS</div>
+            <div style="cursor: pointer; font-size: 28px; color: var(--text-dim);" onclick="closeDrawer()">&times;</div>
         </div>
         
-        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
-            <div class="text-sm text-dim text-uppercase mb-3">Position Telemetry</div>
+        <div class="panel mb-4" style="border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Trade Performance</div>
             <div class="flex-between mb-3">
-                <span class="text-sm">Realized / Unrealized PnL</span>
-                <span id="drawer-asset-pnl" class="num font-weight: 600;">₹0.00</span>
+                <span class="text-sm">Quantity Held</span>
+                <span id="drawer-asset-qty" class="num font-weight: 600; color: var(--accent-gold);">0</span>
             </div>
             <div class="flex-between mb-3">
-                <span class="text-sm">Distance to Kill Switch (Stop Loss)</span>
-                <span id="drawer-asset-stop-dist" class="num red font-weight: 600;">0.00%</span>
+                <span class="text-sm">Current PnL (Unrealized)</span>
+                <span id="drawer-asset-pnl" class="num" style="font-size: 20px; font-weight: 700;">₹0.00</span>
             </div>
-            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 5px;">
+            <div class="flex-between mb-3">
+                <span class="text-sm">Invested Capital</span>
+                <span id="drawer-asset-invested" class="num font-weight: 600;">₹0.00</span>
+            </div>
+            <div class="flex-between mb-3">
+                <span class="text-sm">Current Market Value</span>
+                <span id="drawer-asset-value" class="num font-weight: 600;">₹0.00</span>
+            </div>
+        </div>
+        
+        <div class="panel mb-4" style="border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Risk & Stop Loss Analytics</div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Highest Peak Price Reached</span>
+                <span id="drawer-asset-peak" class="num gold">₹0.00</span>
+            </div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Hard Trailing Stop (15% below Peak)</span>
+                <span id="drawer-asset-stop" class="num red">₹0.00</span>
+            </div>
+            <div class="flex-between mb-3 text-sm mt-4">
+                <span>Distance to Stop Loss Activation</span>
+                <span id="drawer-asset-stop-dist" class="num font-weight: 600;">0.00%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: #222; border-radius: 3px; margin-top: 5px;">
                 <div id="drawer-asset-stop-bar" style="width: 50%; height: 100%; background: var(--accent-green); border-radius: 3px;"></div>
             </div>
         </div>
         
-        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
-            <div class="text-sm text-dim text-uppercase mb-3">Alpha Decay Monitor</div>
+        <div class="panel mb-4" style="border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Quantitative Alpha Scores</div>
             <div class="flex-between mb-3 text-sm">
-                <span>Momentum Score (WML)</span>
-                <div><span class="text-dim num">Orig: 2.1z</span> <span style="margin: 0 8px;">➔</span> <span class="num green">Cur: 0.8z</span></div>
+                <span>XGBoost Hold Probability</span>
+                <span class="num green">89.4%</span>
             </div>
             <div class="flex-between mb-3 text-sm">
-                <span>Quality Score (QMJ)</span>
-                <div><span class="text-dim num">Orig: 1.4z</span> <span style="margin: 0 8px;">➔</span> <span class="num green">Cur: 1.5z</span></div>
+                <span>Momentum Factor (WML)</span>
+                <span class="num green">+1.84z</span>
+            </div>
+            <div class="flex-between text-sm">
+                <span>Quality Factor (QMJ)</span>
+                <span class="num green">+0.92z</span>
             </div>
         </div>
     </div>
 
-    <!-- 2. TRADE RATIONALE DRAWER -->
+    <!-- 2. PAST TRADE REPORT (EXECUTION DRAWER) -->
     <div class="drawer" id="tradeDrawer">
         <div class="flex-between mb-4">
-            <div id="drawer-trade-title" style="font-size: 24px; font-weight: 700;">Trade Report</div>
-            <div style="cursor: pointer; font-size: 24px; color: var(--text-dim);" onclick="closeOverlays()">&times;</div>
+            <div id="drawer-trade-title" style="font-size: 26px; font-weight: 700; color: var(--accent-gold);">PAST TRADE REPORT</div>
+            <div style="cursor: pointer; font-size: 28px; color: var(--text-dim);" onclick="closeDrawer()">&times;</div>
         </div>
         
-        <div class="text-sm text-dim mb-4" id="drawer-trade-time">Executed: 00:00:00</div>
+        <div class="text-sm text-dim mb-4 num" id="drawer-trade-time">TIME: 00:00:00</div>
 
-        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); text-align: center;">
-            <div class="text-sm text-dim text-uppercase mb-3">XGBoost Meta-Labeler Confidence</div>
-            <div class="num green" style="font-size: 42px; font-weight: 700;">87.3%</div>
-            <div class="text-sm text-dim mt-2">P(Success) score triggered entry threshold.</div>
-        </div>
-
-        <div class="panel mb-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
-            <div class="text-sm text-dim text-uppercase mb-3">Frictional Cost Receipt</div>
+        <div class="panel mb-4" style="border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Execution Summary</div>
             <div class="flex-between mb-3 text-sm">
-                <span>Gross Trade Value</span>
-                <span id="drawer-trade-gross" class="num">₹0.00</span>
+                <span>Shares Executed</span>
+                <span id="drawer-trade-qty" class="num gold" style="font-size: 18px; font-weight: 700;">0</span>
             </div>
             <div class="flex-between mb-3 text-sm">
-                <span>STT Paid (0.1%)</span>
+                <span>Fill Price</span>
+                <span id="drawer-trade-price" class="num">₹0.00</span>
+            </div>
+            <div class="flex-between mb-3 text-sm">
+                <span>Gross Trade Value</span>
+                <span id="drawer-trade-gross" class="num font-weight: 600;">₹0.00</span>
+            </div>
+        </div>
+        
+        <div class="panel mb-4" style="border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Trade Rationale</div>
+            <div class="flex-between mb-3 text-sm">
+                <span>XGBoost ML Confidence at Entry</span>
+                <span class="num green" style="font-weight: 700; font-size: 16px;">87.3%</span>
+            </div>
+            <div class="text-sm text-dim mt-2">The model identified strong forward momentum crossing the critical entry threshold.</div>
+        </div>
+
+        <div class="panel mb-4" style="border: 1px solid var(--border);">
+            <div class="text-sm text-dim text-uppercase mb-3">Friction Cost Receipt</div>
+            <div class="flex-between mb-3 text-sm">
+                <span>STT Paid (0.1% Delivery)</span>
                 <span id="drawer-trade-stt" class="num red">-₹0.00</span>
             </div>
             <div class="flex-between mb-3 text-sm">
                 <span>Exchange & Stamp Duty</span>
                 <span id="drawer-trade-stamp" class="num red">-₹0.00</span>
             </div>
-            <div class="flex-between mb-3 text-sm">
-                <span>Est. Market Slippage</span>
+            <div class="flex-between text-sm pt-3" style="border-top: 1px dashed var(--border);">
+                <span>Estimated Market Slippage</span>
                 <span id="drawer-trade-slip" class="num red">-₹0.00</span>
             </div>
         </div>
@@ -315,24 +385,23 @@
 
     <!-- 3. FULL TRADE HISTORY MODAL -->
     <div class="modal" id="historyModal">
-        <div class="panel-header" style="padding: 20px; margin: 0; background: var(--bg-panel); border-bottom: 1px solid var(--border);">
-            <span style="font-size: 18px; color: var(--text-main);">Master Audit Ledger</span>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="modalSearch" placeholder="Search Ticker..." style="background: var(--bg-pure); border: 1px solid var(--border); color: var(--text-main); padding: 6px 12px; border-radius: 6px; font-family: 'Inter'; font-size: 13px;">
-                <button class="btn" onclick="closeOverlays()">Close</button>
+        <div class="panel-header" style="padding: 20px 30px; margin: 0; background: var(--bg-panel); border-bottom: 1px solid var(--border);">
+            <span style="font-size: 22px; color: var(--accent-gold); font-weight: 700;">COMPLETE PAST TRADES HISTORY</span>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="modalSearch" placeholder="Search Trades (e.g. RELIANCE)" style="background: var(--bg-pure); border: 1px solid var(--border); color: var(--text-main); padding: 10px 16px; border-radius: 4px; font-family: 'Inter'; font-size: 14px; width: 300px;">
+                <button class="btn" onclick="closeModal()" style="padding: 10px 20px; font-size: 14px;">CLOSE HISTORY</button>
             </div>
         </div>
-        <div style="flex-grow: 1; overflow-y: auto;">
+        <div style="flex-grow: 1; overflow-y: auto; padding: 20px;">
             <table>
                 <thead>
                     <tr>
-                        <th>Date & Time</th>
-                        <th>Action</th>
-                        <th>Ticker</th>
-                        <th>Quantity</th>
-                        <th>Fill Price</th>
-                        <th>Gross Value</th>
-                        <th>Net Profit (If Sell)</th>
+                        <th style="font-size: 13px;">Date & Time</th>
+                        <th style="font-size: 13px;">Action</th>
+                        <th style="font-size: 13px;">Ticker</th>
+                        <th style="font-size: 13px;">Fill Price</th>
+                        <th style="font-size: 13px;">Gross Value</th>
+                        <th style="font-size: 13px;">Trade PnL</th>
                     </tr>
                 </thead>
                 <tbody id="modal-ledger-body">
@@ -343,18 +412,26 @@
     </div>
 
     <script>
-        // 1. Data Parsing
+        // Data Parsing
         const portfolioData = JSON.parse(document.getElementById('portfolio-data').textContent);
         const holdings = portfolioData.holdings || {};
         const tradeHistory = portfolioData.trade_history || [];
         
         // Formatter
         const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+        
+        function hashToMockPnl(str, gross, isSell) {
+            if(!isSell) return 0;
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            const mockPct = ((hash % 15) - 5) / 100; // -5% to +10%
+            return gross * mockPct;
+        }
 
-        // 2. Populate Holdings Table
+        // Populate Holdings (Live Trades)
         const holdingsBody = document.getElementById('holdings-body');
         if(Object.keys(holdings).length === 0) {
-            holdingsBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 30px; color: #94a3b8;">No Active Holdings</td></tr>`;
+            holdingsBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: #555;">No Active Live Trades. Bot is in cash.</td></tr>`;
         } else {
             for(const [symbol, data] of Object.entries(holdings)) {
                 const avg = data.avg_price;
@@ -362,89 +439,170 @@
                 const stop = peak * 0.85;
                 const dist = ((avg - stop) / avg) * 100;
                 
-                // MOCK PnL (Since we don't have live market price in JS, we simulate slight movement)
+                // MOCK CURRENT PRICE for visualization
                 const mockCurrent = avg * (1 + (Math.random() * 0.04 - 0.01)); 
                 const pnl = (mockCurrent - avg) / avg * 100;
                 const color = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
                 
                 holdingsBody.innerHTML += `
-                    <tr class="clickable" onclick="openAssetDrawer('${symbol}', ${avg}, ${peak}, ${mockCurrent}, ${pnl})">
-                        <td style="font-weight: 600; color: var(--accent-blue);">${symbol}</td>
+                    <tr class="clickable" onclick="openAssetDrawer('${symbol}', ${data.qty}, ${avg}, ${peak}, ${mockCurrent}, ${pnl})">
+                        <td style="font-weight: 700;">${symbol}</td>
                         <td class="num">${data.qty}</td>
-                        <td class="num">${fmt.format(avg)} <span style="color:${color}; font-size: 10px;">(${pnl>0?'+':''}${pnl.toFixed(2)}%)</span></td>
-                        <td>
-                            <div class="num text-dim" style="font-size: 11px; margin-bottom:4px; text-align: right;">Trigger: ${fmt.format(stop)}</div>
-                            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
-                                <div style="width: ${100-dist}%; height: 100%; background: var(--accent-gold); border-radius: 2px;"></div>
-                            </div>
-                        </td>
+                        <td class="num">${fmt.format(avg)}</td>
+                        <td class="num" style="color: ${color}; font-weight: 600;">${fmt.format(mockCurrent)} (${pnl>0?'+':''}${pnl.toFixed(2)}%)</td>
+                        <td class="num red">${fmt.format(stop)}</td>
                     </tr>
                 `;
             }
         }
 
-        // 3. Populate Trade Ledger (Widget)
+        // Populate Recent Ledger
         const ledgerBody = document.getElementById('ledger-body');
-        const recentTrades = [...tradeHistory].reverse().slice(0, 10);
+        const recentTrades = [...tradeHistory].reverse().slice(0, 15);
         if(recentTrades.length === 0) {
-            ledgerBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #94a3b8;">No Trades Executed</td></tr>`;
+            ledgerBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: #555;">No Past Trades Executed</td></tr>`;
         } else {
             recentTrades.forEach(trade => {
                 const sideColor = trade.action === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)';
+                const gross = trade.qty * trade.price;
+                const mockPnl = hashToMockPnl(trade.timestamp + trade.symbol, gross, trade.action === 'SELL');
+                
+                let pnlHtml = `<span style="color:var(--text-dim)">-</span>`;
+                if(trade.action === 'SELL') {
+                    const color = mockPnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                    pnlHtml = `<span style="color:${color}; font-weight:600;">${mockPnl >= 0 ? '+' : ''}${fmt.format(mockPnl)}</span>`;
+                }
+                
                 ledgerBody.innerHTML += `
                     <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}')">
                         <td class="num text-dim">${trade.timestamp.substring(11, 19)}</td>
-                        <td style="font-weight: 700; color: ${sideColor};">${trade.action}</td>
-                        <td style="font-weight: 600;">${trade.symbol}</td>
-                        <td class="num">${trade.qty}</td>
+                        <td style="font-weight: 800; color: ${sideColor};">${trade.action}</td>
+                        <td style="font-weight: 700;">${trade.symbol}</td>
                         <td class="num">${fmt.format(trade.price)}</td>
+                        <td class="num">${pnlHtml}</td>
                     </tr>
                 `;
             });
         }
 
-        // 4. Modal/Drawer Controls
-        function openOverlays() { document.getElementById('overlay').classList.add('open'); }
-        function closeOverlays() {
-            document.getElementById('overlay').classList.remove('open');
-            document.getElementById('assetDrawer').classList.remove('open');
-            document.getElementById('tradeDrawer').classList.remove('open');
+        // GENERATE CALENDAR
+        function buildCalendar() {
+            const calGrid = document.getElementById('calendar-cells');
+            const monthName = document.getElementById('calendar-month-name');
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth(); // 0-indexed
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthName.innerText = monthNames[month] + " " + year;
+            
+            const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 is Sunday
+            const emptySlots = (firstDayOfWeek === 0 || firstDayOfWeek === 6) ? 0 : firstDayOfWeek - 1;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            calGrid.innerHTML = '';
+            
+            // Empty slots before 1st of month (aligning to Monday)
+            for(let i = 0; i < emptySlots; i++) {
+                calGrid.innerHTML += `<div class="calendar-cell" style="opacity: 0; pointer-events: none; border: none;"></div>`;
+            }
+            
+            // Days of the month
+            const todayDate = now.getDate();
+            for(let day = 1; day <= daysInMonth; day++) {
+                const dayOfWeek = new Date(year, month, day).getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip Sat & Sun
+                
+                // Mock daily PnL generation based on date seed
+                const seed = year * 10000 + month * 100 + day;
+                let dailyPnl = 0;
+                let cls = '';
+                let pnlText = '-';
+                
+                if (day <= todayDate) {
+                    // Generate random profit or loss between -₹20k and +₹40k
+                    const pseudoRandom = Math.sin(seed) * 10000;
+                    dailyPnl = (pseudoRandom - Math.floor(pseudoRandom)) * 60000 - 15000;
+                    
+                    if (dailyPnl > 0) {
+                        cls = 'profit';
+                        pnlText = '+' + fmt.format(dailyPnl).replace('₹', ''); // Shorten string
+                    } else if (dailyPnl < 0) {
+                        cls = 'loss';
+                        pnlText = fmt.format(dailyPnl).replace('-₹', '-');
+                    }
+                }
+                
+                calGrid.innerHTML += `
+                    <div class="calendar-cell ${cls}">
+                        <div class="calendar-date">${day}</div>
+                        <div class="calendar-pnl">${pnlText}</div>
+                    </div>
+                `;
+            }
+        }
+        buildCalendar();
+
+        // Modals & Drawers Logic
+        function openModalOverlay() { document.getElementById('modalOverlay').classList.add('open'); }
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
             document.getElementById('historyModal').classList.remove('open');
         }
+        
+        function openDrawerOverlay() { document.getElementById('drawerOverlay').classList.add('open'); }
+        function closeDrawer() {
+            document.getElementById('drawerOverlay').classList.remove('open');
+            document.getElementById('assetDrawer').classList.remove('open');
+            document.getElementById('tradeDrawer').classList.remove('open');
+        }
 
-        function openAssetDrawer(ticker, avg, peak, current, pnlPct) {
-            document.getElementById('drawer-asset-title').innerText = ticker + " Deep Dive";
-            const isProfit = pnlPct >= 0;
-            const pnlStr = (isProfit?'+':'') + pnlPct.toFixed(2) + '%';
+        function openAssetDrawer(ticker, qty, avg, peak, current, pnlPct) {
+            document.getElementById('drawer-asset-title').innerText = ticker + " LIVE TRADE";
+            const invested = qty * avg;
+            const value = qty * current;
+            const pnlValue = value - invested;
+            
+            const isProfit = pnlValue >= 0;
+            const pnlStr = (isProfit?'+':'') + fmt.format(pnlValue) + ` (${pnlPct.toFixed(2)}%)`;
+            
             document.getElementById('drawer-asset-pnl').innerText = pnlStr;
             document.getElementById('drawer-asset-pnl').style.color = isProfit ? 'var(--accent-green)' : 'var(--accent-red)';
+            document.getElementById('drawer-asset-qty').innerText = qty;
+            document.getElementById('drawer-asset-invested').innerText = fmt.format(invested);
+            document.getElementById('drawer-asset-value').innerText = fmt.format(value);
             
             const stop = peak * 0.85;
             const dist = ((current - stop) / current) * 100;
+            
+            document.getElementById('drawer-asset-peak').innerText = fmt.format(peak);
+            document.getElementById('drawer-asset-stop').innerText = fmt.format(stop);
             document.getElementById('drawer-asset-stop-dist').innerText = dist.toFixed(2) + '%';
             
             const bar = document.getElementById('drawer-asset-stop-bar');
-            bar.style.width = Math.min(100, Math.max(0, dist * 5)) + '%'; // Visual scaling
+            bar.style.width = Math.min(100, Math.max(0, dist * 5)) + '%';
             bar.style.background = dist < 3 ? 'var(--accent-red)' : 'var(--accent-green)';
             
-            openOverlays();
+            openDrawerOverlay();
             document.getElementById('assetDrawer').classList.add('open');
         }
 
         function openTradeDrawer(ticker, side, qty, price, time) {
-            document.getElementById('drawer-trade-title').innerText = side + " " + ticker + " Report";
-            document.getElementById('drawer-trade-time').innerText = "Executed: " + time;
+            document.getElementById('drawer-trade-title').innerText = side + " " + ticker + " REPORT";
+            document.getElementById('drawer-trade-time').innerText = "TIME: " + time;
             
             const gross = qty * price;
+            document.getElementById('drawer-trade-qty').innerText = qty;
+            document.getElementById('drawer-trade-price').innerText = fmt.format(price);
             document.getElementById('drawer-trade-gross').innerText = fmt.format(gross);
+            
             document.getElementById('drawer-trade-stt').innerText = "-" + fmt.format(gross * 0.001);
             document.getElementById('drawer-trade-stamp').innerText = "-" + fmt.format(gross * 0.00015);
-            
-            // Mock slippage based on square root law logic
             const slipPct = 0.0005 + (Math.random() * 0.001); 
             document.getElementById('drawer-trade-slip').innerText = "-" + fmt.format(gross * slipPct);
 
-            openOverlays();
+            openDrawerOverlay();
             document.getElementById('tradeDrawer').classList.add('open');
         }
 
@@ -455,24 +613,27 @@
             [...tradeHistory].reverse().forEach(trade => {
                 const sideColor = trade.action === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)';
                 const gross = trade.qty * trade.price;
-                const netMock = trade.action === 'SELL' ? (gross * (Math.random() * 0.1 - 0.02)) : 0;
+                const mockPnl = hashToMockPnl(trade.timestamp + trade.symbol, gross, trade.action === 'SELL');
+                
+                let pnlHtml = `<span style="color:var(--text-dim)">-</span>`;
+                if(trade.action === 'SELL') {
+                    const color = mockPnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                    pnlHtml = `<span style="color:${color}; font-weight:600;">${mockPnl >= 0 ? '+' : ''}${fmt.format(mockPnl)}</span>`;
+                }
                 
                 tbody.innerHTML += `
-                    <tr>
-                        <td class="num text-dim">${trade.timestamp.substring(0, 19)}</td>
-                        <td style="font-weight: 700; color: ${sideColor};">${trade.action}</td>
-                        <td style="font-weight: 600;">${trade.symbol}</td>
-                        <td class="num">${trade.qty}</td>
-                        <td class="num">${fmt.format(trade.price)}</td>
-                        <td class="num">${fmt.format(gross)}</td>
-                        <td class="num" style="color: ${netMock > 0 ? 'var(--accent-green)' : (netMock < 0 ? 'var(--accent-red)' : 'var(--text-dim)')}">
-                            ${trade.action === 'SELL' ? fmt.format(netMock) : '-'}
-                        </td>
+                    <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}')">
+                        <td class="num text-dim" style="font-size: 14px;">${trade.timestamp}</td>
+                        <td style="font-weight: 800; color: ${sideColor}; font-size: 15px;">${trade.action}</td>
+                        <td style="font-weight: 700; font-size: 15px;">${trade.symbol}</td>
+                        <td class="num" style="font-size: 15px;">${fmt.format(trade.price)}</td>
+                        <td class="num" style="font-size: 15px;">${fmt.format(gross)}</td>
+                        <td class="num" style="font-size: 15px;">${pnlHtml}</td>
                     </tr>
                 `;
             });
             
-            openOverlays();
+            openModalOverlay();
             document.getElementById('historyModal').classList.add('open');
         }
 
@@ -483,39 +644,6 @@
             for(let row of rows) {
                 const ticker = row.cells[2].innerText.toLowerCase();
                 row.style.display = ticker.includes(term) ? '' : 'none';
-            }
-        });
-
-        // Charts Rendering
-        const ctxEquity = document.getElementById('equityChart').getContext('2d');
-        const labels = Array.from({length: 30}, (_, i) => `Day ${i+1}`);
-        const dataPoints = [10000000];
-        for(let i=1; i<30; i++) dataPoints.push(dataPoints[i-1] + (Math.random() * 200000 - 80000));
-        dataPoints[29] = {{ total_equity }};
-        
-        new Chart(ctxEquity, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Portfolio MTM (₹)', data: dataPoints, borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: {family: 'JetBrains Mono'} } }, x: { grid: { display: false }, ticks: { display: false } } }
-            }
-        });
-
-        const ctxRadar = document.getElementById('radarChart').getContext('2d');
-        new Chart(ctxRadar, {
-            type: 'radar',
-            data: {
-                labels: ['Quality', 'Value', 'Momentum', 'Size', 'Low Vol'],
-                datasets: [{ data: [85, 60, 90, 40, 70], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#3b82f6', pointBackgroundColor: '#3b82f6', borderWidth: 2 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                scales: { r: { angleLines: { color: 'rgba(255,255,255,0.1)' }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: '#94a3b8', font: {size: 11} }, ticks: { display: false } } }
             }
         });
     </script>
