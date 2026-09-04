@@ -110,47 +110,35 @@ def main():
     logger.info("    Onyx Quantitative Trading Bot - Daemon Started   ")
     logger.info("    Cloud Timezone Enforced: Asia/Kolkata (IST)      ")
     logger.info("=====================================================")
-    
-    # Run the intraday logic every 10 minutes
-    schedule.every(10).minutes.do(intraday_job)
-    
-    # Run the heavy End-of-Day database update every day at 18:00 (6:00 PM)
-    # Using 'Asia/Kolkata' if schedule supports it, otherwise fallback to UTC offset conversion.
-    try:
-        schedule.every().day.at("18:00", "Asia/Kolkata").do(eod_job)
-    except Exception:
-        # Fallback if old schedule version (18:00 IST = 12:30 UTC)
-        logger.warning("Schedule library version doesn't support timezones. Falling back to UTC offset (12:30 UTC = 18:00 IST).")
-        schedule.every().day.at("12:30").do(eod_job)
-    
-    # Run once immediately on startup just to show it works
-    logger.info("Running initial startup cycle...")
-    run_live_cycle()
-    
-    logger.info("Bot is now in hibernation mode, waiting for scheduled tasks...")
-    logger.info("RAM Usage during hibernation is virtually zero.")
-    
-    # Render.com Web Service Hack:
-    # Render requires a web server to bind to a port, otherwise the deployment fails.
-    # We move the infinite schedule loop into a background thread.
-    import threading
-    from flask import Flask
-    
-    def run_scheduler():
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
-            
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
-    
-    # Start the Flask web dashboard on port 10000
-    from flask import render_template
+    from flask import Flask, render_template, request, jsonify
     import json
     import os
+    import threading
     
     app = Flask(__name__)
     
+    CRON_SECRET = os.getenv("CRON_SECRET", "onyx_default_secret")
+    
+    @app.route('/api/cron/intraday')
+    def trigger_intraday():
+        token = request.args.get('token')
+        if token != CRON_SECRET:
+            return jsonify({"status": "error", "message": "Unauthorized"}), 401
+        
+        logger.info("Webhook triggered: Intraday Cycle")
+        threading.Thread(target=intraday_job).start()
+        return jsonify({"status": "success", "message": "Intraday cycle started"})
+        
+    @app.route('/api/cron/eod')
+    def trigger_eod():
+        token = request.args.get('token')
+        if token != CRON_SECRET:
+            return jsonify({"status": "error", "message": "Unauthorized"}), 401
+            
+        logger.info("Webhook triggered: EOD Cycle")
+        threading.Thread(target=eod_job).start()
+        return jsonify({"status": "success", "message": "EOD cycle started"})
+        
     @app.route('/')
     def dashboard():
         from pymongo import MongoClient
