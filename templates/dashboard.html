@@ -319,7 +319,7 @@
             <div class="text-sm text-dim text-uppercase mb-3">Quantitative Alpha Scores</div>
             <div class="flex-between mb-3 text-sm">
                 <span>XGBoost Hold Probability</span>
-                <span class="num green">89.4%</span>
+                <span id="drawer-asset-ml" class="num green">0.0%</span>
             </div>
             <div class="flex-between mb-3 text-sm">
                 <span>Momentum Factor (WML)</span>
@@ -361,7 +361,7 @@
             <div class="text-sm text-dim text-uppercase mb-3">Trade Rationale</div>
             <div class="flex-between mb-3 text-sm">
                 <span>XGBoost ML Confidence at Entry</span>
-                <span class="num green" style="font-weight: 700; font-size: 16px;">87.3%</span>
+                <span id="drawer-trade-ml" class="num green" style="font-weight: 700; font-size: 16px;">0.0%</span>
             </div>
             <div class="text-sm text-dim mt-2">The model identified strong forward momentum crossing the critical entry threshold.</div>
         </div>
@@ -377,7 +377,7 @@
                 <span id="drawer-trade-stamp" class="num red">-₹0.00</span>
             </div>
             <div class="flex-between text-sm pt-3" style="border-top: 1px dashed var(--border);">
-                <span>Estimated Market Slippage</span>
+                <span>Total Frictional Cost (Slippage + Tax)</span>
                 <span id="drawer-trade-slip" class="num red">-₹0.00</span>
             </div>
         </div>
@@ -419,14 +419,6 @@
         
         // Formatter
         const fmt = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
-        
-        function hashToMockPnl(str, gross, isSell) {
-            if(!isSell) return 0;
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            const mockPct = ((hash % 15) - 5) / 100; // -5% to +10%
-            return gross * mockPct;
-        }
 
         // Populate Holdings (Live Trades)
         const holdingsBody = document.getElementById('holdings-body');
@@ -439,17 +431,17 @@
                 const stop = peak * 0.85;
                 const dist = ((avg - stop) / avg) * 100;
                 
-                // MOCK CURRENT PRICE for visualization
-                const mockCurrent = avg * (1 + (Math.random() * 0.04 - 0.01)); 
-                const pnl = (mockCurrent - avg) / avg * 100;
+                const current = data.current_price || avg; 
+                const pnl = ((current - avg) / avg) * 100;
                 const color = pnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                const mlConf = data.ml_confidence || 85.0;
                 
                 holdingsBody.innerHTML += `
-                    <tr class="clickable" onclick="openAssetDrawer('${symbol}', ${data.qty}, ${avg}, ${peak}, ${mockCurrent}, ${pnl})">
+                    <tr class="clickable" onclick="openAssetDrawer('${symbol}', ${data.qty}, ${avg}, ${peak}, ${current}, ${pnl}, ${mlConf})">
                         <td style="font-weight: 700;">${symbol}</td>
                         <td class="num">${data.qty}</td>
                         <td class="num">${fmt.format(avg)}</td>
-                        <td class="num" style="color: ${color}; font-weight: 600;">${fmt.format(mockCurrent)} (${pnl>0?'+':''}${pnl.toFixed(2)}%)</td>
+                        <td class="num" style="color: ${color}; font-weight: 600;">${fmt.format(current)} (${pnl>0?'+':''}${pnl.toFixed(2)}%)</td>
                         <td class="num red">${fmt.format(stop)}</td>
                     </tr>
                 `;
@@ -465,16 +457,18 @@
             recentTrades.forEach(trade => {
                 const sideColor = trade.action === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)';
                 const gross = trade.qty * trade.price;
-                const mockPnl = hashToMockPnl(trade.timestamp + trade.symbol, gross, trade.action === 'SELL');
+                const realPnl = trade.realized_pnl || 0.0;
+                const cost = trade.frictional_cost || (gross * 0.001);
+                const mlConf = trade.ml_confidence || 85.0;
                 
                 let pnlHtml = `<span style="color:var(--text-dim)">-</span>`;
                 if(trade.action === 'SELL') {
-                    const color = mockPnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-                    pnlHtml = `<span style="color:${color}; font-weight:600;">${mockPnl >= 0 ? '+' : ''}${fmt.format(mockPnl)}</span>`;
+                    const color = realPnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                    pnlHtml = `<span style="color:${color}; font-weight:600;">${realPnl >= 0 ? '+' : ''}${fmt.format(realPnl)}</span>`;
                 }
                 
                 ledgerBody.innerHTML += `
-                    <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}')">
+                    <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}', ${mlConf}, ${cost})">
                         <td class="num text-dim">${trade.timestamp.substring(11, 19)}</td>
                         <td style="font-weight: 800; color: ${sideColor};">${trade.action}</td>
                         <td style="font-weight: 700;">${trade.symbol}</td>
@@ -508,29 +502,43 @@
                 calGrid.innerHTML += `<div class="calendar-cell" style="opacity: 0; pointer-events: none; border: none;"></div>`;
             }
             
+            const mtmData = portfolioData.daily_mtm || {};
+            
             // Days of the month
             const todayDate = now.getDate();
             for(let day = 1; day <= daysInMonth; day++) {
                 const dayOfWeek = new Date(year, month, day).getDay();
                 if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip Sat & Sun
                 
-                // Mock daily PnL generation based on date seed
-                const seed = year * 10000 + month * 100 + day;
                 let dailyPnl = 0;
                 let cls = '';
                 let pnlText = '-';
                 
                 if (day <= todayDate) {
-                    // Generate random profit or loss between -₹20k and +₹40k
-                    const pseudoRandom = Math.sin(seed) * 10000;
-                    dailyPnl = (pseudoRandom - Math.floor(pseudoRandom)) * 60000 - 15000;
+                    const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const prevDateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(day-1).padStart(2, '0')}`;
                     
-                    if (dailyPnl > 0) {
-                        cls = 'profit';
-                        pnlText = '+' + fmt.format(dailyPnl).replace('₹', ''); // Shorten string
-                    } else if (dailyPnl < 0) {
-                        cls = 'loss';
-                        pnlText = fmt.format(dailyPnl).replace('-₹', '-');
+                    if (mtmData[dateStr]) {
+                        // If we have previous day data, calculate difference, else assume 0 for now (or vs initial)
+                        if (mtmData[prevDateStr]) {
+                            dailyPnl = mtmData[dateStr] - mtmData[prevDateStr];
+                        } else {
+                            // First tracked day of the month
+                            dailyPnl = mtmData[dateStr] - portfolioData.initial_cash;
+                        }
+                        
+                        if (dailyPnl > 0) {
+                            cls = 'profit';
+                            pnlText = '+' + fmt.format(dailyPnl).replace('₹', ''); 
+                        } else if (dailyPnl < 0) {
+                            cls = 'loss';
+                            pnlText = fmt.format(dailyPnl).replace('-₹', '-');
+                        } else {
+                            pnlText = '0';
+                        }
+                    } else {
+                        // Market open today but data not saved yet
+                        pnlText = '...';
                     }
                 }
                 
@@ -558,8 +566,10 @@
             document.getElementById('tradeDrawer').classList.remove('open');
         }
 
-        function openAssetDrawer(ticker, qty, avg, peak, current, pnlPct) {
+        function openAssetDrawer(ticker, qty, avg, peak, current, pnlPct, mlConf) {
             document.getElementById('drawer-asset-title').innerText = ticker + " LIVE TRADE";
+            document.getElementById('drawer-asset-ml').innerText = mlConf.toFixed(1) + '%';
+            
             const invested = qty * avg;
             const value = qty * current;
             const pnlValue = value - invested;
@@ -588,9 +598,10 @@
             document.getElementById('assetDrawer').classList.add('open');
         }
 
-        function openTradeDrawer(ticker, side, qty, price, time) {
+        function openTradeDrawer(ticker, side, qty, price, time, mlConf, cost) {
             document.getElementById('drawer-trade-title').innerText = side + " " + ticker + " REPORT";
             document.getElementById('drawer-trade-time').innerText = "TIME: " + time;
+            document.getElementById('drawer-trade-ml').innerText = mlConf.toFixed(1) + '%';
             
             const gross = qty * price;
             document.getElementById('drawer-trade-qty').innerText = qty;
@@ -599,8 +610,7 @@
             
             document.getElementById('drawer-trade-stt').innerText = "-" + fmt.format(gross * 0.001);
             document.getElementById('drawer-trade-stamp').innerText = "-" + fmt.format(gross * 0.00015);
-            const slipPct = 0.0005 + (Math.random() * 0.001); 
-            document.getElementById('drawer-trade-slip').innerText = "-" + fmt.format(gross * slipPct);
+            document.getElementById('drawer-trade-slip').innerText = "-" + fmt.format(cost);
 
             openDrawerOverlay();
             document.getElementById('tradeDrawer').classList.add('open');
@@ -613,16 +623,18 @@
             [...tradeHistory].reverse().forEach(trade => {
                 const sideColor = trade.action === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)';
                 const gross = trade.qty * trade.price;
-                const mockPnl = hashToMockPnl(trade.timestamp + trade.symbol, gross, trade.action === 'SELL');
+                const realPnl = trade.realized_pnl || 0.0;
+                const cost = trade.frictional_cost || (gross * 0.001);
+                const mlConf = trade.ml_confidence || 85.0;
                 
                 let pnlHtml = `<span style="color:var(--text-dim)">-</span>`;
                 if(trade.action === 'SELL') {
-                    const color = mockPnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-                    pnlHtml = `<span style="color:${color}; font-weight:600;">${mockPnl >= 0 ? '+' : ''}${fmt.format(mockPnl)}</span>`;
+                    const color = realPnl >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                    pnlHtml = `<span style="color:${color}; font-weight:600;">${realPnl >= 0 ? '+' : ''}${fmt.format(realPnl)}</span>`;
                 }
                 
                 tbody.innerHTML += `
-                    <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}')">
+                    <tr class="clickable" onclick="openTradeDrawer('${trade.symbol}', '${trade.action}', ${trade.qty}, ${trade.price}, '${trade.timestamp}', ${mlConf}, ${cost})">
                         <td class="num text-dim" style="font-size: 14px;">${trade.timestamp}</td>
                         <td style="font-weight: 800; color: ${sideColor}; font-size: 15px;">${trade.action}</td>
                         <td style="font-weight: 700; font-size: 15px;">${trade.symbol}</td>

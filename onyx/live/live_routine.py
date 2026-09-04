@@ -9,6 +9,9 @@ from onyx.data.data_pipeline import DataPipeline
 from onyx.live.portfolio import PaperPortfolio
 from onyx.portfolio.optimizer import ConvexOptimizer
 
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -103,19 +106,25 @@ def run_live_cycle():
         
         if delta_qty > 0:
             logger.info(f"BUY  {delta_qty:5d} shares of {symbol:10s} (Target: {target_weight:.1%})")
-            # Theoretically fill the trade
-            portfolio.execute_trade(symbol, delta_qty, current_price)
+            if portfolio.execute_trade(symbol, delta_qty, current_price):
+                portfolio.state["trade_history"][-1]["ml_confidence"] = sigmoid(alphas[symbol]) * 100
         elif delta_qty < 0:
             logger.info(f"SELL {abs(delta_qty):5d} shares of {symbol:10s} (Target: {target_weight:.1%})")
-            # Theoretically fill the trade
-            portfolio.execute_trade(symbol, delta_qty, current_price)
+            if portfolio.execute_trade(symbol, delta_qty, current_price):
+                portfolio.state["trade_history"][-1]["ml_confidence"] = sigmoid(alphas[symbol]) * 100
         else:
             logger.info(f"HOLD {current_qty:5d} shares of {symbol:10s} (Target: {target_weight:.1%})")
+            
+        # Update live ML Confidence for active holdings
+        if current_qty + delta_qty > 0 and symbol in portfolio.state["holdings"]:
+            portfolio.state["holdings"][symbol]["ml_confidence"] = sigmoid(alphas[symbol]) * 100
+            portfolio.save_state()
             
     logger.info("=====================================================\n")
     
     # Final state
     final_val = portfolio.get_total_value(current_prices)
+    portfolio.record_daily_mtm(final_val) # Phase 17: Log for Calendar Widget
     logger.info(f"Cycle Complete. New Portfolio MTM: ₹{final_val:,.2f}")
     logger.info(f"Cash Remaining: ₹{portfolio.state['current_cash']:,.2f}")
 

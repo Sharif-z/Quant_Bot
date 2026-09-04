@@ -88,11 +88,18 @@ def eod_job():
                 logger.warning("FALLBACK TRIGGERED: System will use deterministic Phase 4 baseline for tomorrow.")
                 bot_state["gate_passed"] = False
                 
-            import json
-            import os
-            os.makedirs('data_storage', exist_ok=True)
-            with open('data_storage/bot_state.json', 'w') as f:
-                json.dump(bot_state, f)
+            try:
+                import os
+                from pymongo import MongoClient
+                from dotenv import load_dotenv
+                load_dotenv()
+                uri = os.getenv("MONGO_URI")
+                if uri:
+                    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+                    db = client["onyx_db"]
+                    db["bot_state"].update_one({"_id": "ml_state"}, {"$set": bot_state}, upsert=True)
+            except Exception as e:
+                logger.error(f"Failed to save bot state to MongoDB: {e}")
         except Exception as e:
             logger.error(f"EOD ML Pipeline Failed: {e}. Falling back to Phase 4 baseline.")
             
@@ -146,26 +153,31 @@ def main():
     
     @app.route('/')
     def dashboard():
-        # Load local state
+        from pymongo import MongoClient
+        import os
+        from dotenv import load_dotenv
+        
+        load_dotenv()
         portfolio = {}
-        if os.path.exists('data_storage/portfolio.json'):
-            try:
-                with open('data_storage/portfolio.json', 'r') as f:
-                    portfolio = json.load(f)
-            except: pass
-            
         bot_state = {}
-        if os.path.exists('data_storage/bot_state.json'):
-            try:
-                with open('data_storage/bot_state.json', 'r') as f:
-                    bot_state = json.load(f)
-            except: pass
+        
+        try:
+            uri = os.getenv("MONGO_URI")
+            if uri:
+                client = MongoClient(uri, serverSelectionTimeoutMS=3000)
+                db = client["onyx_db"]
+                
+                port_doc = db["portfolio_state"].find_one({"_id": "main_portfolio"})
+                if port_doc: portfolio = port_doc
+                
+                state_doc = db["bot_state"].find_one({"_id": "ml_state"})
+                if state_doc: bot_state = state_doc
+        except Exception as e:
+            print(f"MongoDB Dashboard Error: {e}")
             
-        # Calculate PnL (Mock current price using avg_price if real-time isn't loaded)
         total_equity = portfolio.get('current_cash', 0)
         for ticker, data in portfolio.get('holdings', {}).items():
-            # For a 100% accurate dashboard we'd query yfinance here, but to save speed we use last saved peak/avg
-            total_equity += data.get('qty', 0) * data.get('avg_price', 0)
+            total_equity += data.get('qty', 0) * data.get('current_price', data.get('avg_price', 0))
             
         return render_template('dashboard.html', portfolio=portfolio, bot_state=bot_state, total_equity=total_equity)
         
