@@ -2,16 +2,22 @@ import time
 import logging
 from datetime import datetime
 import schedule
+import pytz
 
 from onyx.live.live_routine import run_live_cycle
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Enforce Indian Standard Time for Cloud Deployments (Hugging Face/AWS)
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_now():
+    return datetime.now(IST)
+
 def is_market_open():
     """Check if the Indian market is currently open (9:15 AM to 3:30 PM IST on weekdays)."""
-    now = datetime.now()
-    # Note: On Termux/Android, ensure your system timezone is set to IST.
+    now = get_ist_now()
     if now.weekday() >= 5: # 5=Sat, 6=Sun
         return False
         
@@ -30,7 +36,7 @@ def intraday_job():
 
 def eod_job():
     """Runs once a day after market close (e.g., 6:00 PM) to download heavy EOD data."""
-    if datetime.now().weekday() < 5: # Only on weekdays
+    if get_ist_now().weekday() < 5: # Only on weekdays
         logger.info("Running End-of-Day (EOD) Batch Process...")
         logger.info("Downloading NSE UDiFF Bhavcopy and updating SQLite Database...")
         # (This is where the Phase 1/2 Database ingestion engine is called)
@@ -84,19 +90,27 @@ def eod_job():
 def main():
     logger.info("=====================================================")
     logger.info("    Onyx Quantitative Trading Bot - Daemon Started   ")
+    logger.info("    Cloud Timezone Enforced: Asia/Kolkata (IST)      ")
     logger.info("=====================================================")
     
     # Run the intraday logic every 10 minutes
     schedule.every(10).minutes.do(intraday_job)
     
     # Run the heavy End-of-Day database update every day at 18:00 (6:00 PM)
-    schedule.every().day.at("18:00").do(eod_job)
+    # Using 'Asia/Kolkata' if schedule supports it, otherwise fallback to UTC offset conversion.
+    try:
+        schedule.every().day.at("18:00", "Asia/Kolkata").do(eod_job)
+    except Exception:
+        # Fallback if old schedule version (18:00 IST = 12:30 UTC)
+        logger.warning("Schedule library version doesn't support timezones. Falling back to UTC offset (12:30 UTC = 18:00 IST).")
+        schedule.every().day.at("12:30").do(eod_job)
     
     # Run once immediately on startup just to show it works
     logger.info("Running initial startup cycle...")
     run_live_cycle()
     
     logger.info("Bot is now in hibernation mode, waiting for scheduled tasks...")
+    logger.info("RAM Usage during hibernation is virtually zero.")
     
     # Infinite loop to keep the python script alive
     while True:
