@@ -20,9 +20,9 @@ RENDER_URL = os.getenv("RENDER_URL", "https://quant-bot-ntcm.onrender.com")
 IST = pytz.timezone('Asia/Kolkata')
 
 def trigger_intraday():
-    logger.info("Pinging Remote Bot: INTRADAY CYCLE")
+    logger.info("Pinging Remote Bot: INTRADAY CYCLE (Waiting up to 60s for Render to wake up...)")
     try:
-        res = requests.get(f"{RENDER_URL}/api/cron/intraday", params={"token": CRON_SECRET}, timeout=10)
+        res = requests.get(f"{RENDER_URL}/api/cron/intraday", params={"token": CRON_SECRET}, timeout=60)
         if res.status_code == 200:
             logger.info("✅ Remote Server Acknowledged Intraday Trigger.")
         else:
@@ -31,9 +31,9 @@ def trigger_intraday():
         logger.error(f"❌ Connection Error: {e}")
 
 def trigger_eod():
-    logger.info("Pinging Remote Bot: EOD BATCH PROCESS")
+    logger.info("Pinging Remote Bot: EOD BATCH PROCESS (Waiting up to 60s for Render to wake up...)")
     try:
-        res = requests.get(f"{RENDER_URL}/api/cron/eod", params={"token": CRON_SECRET}, timeout=10)
+        res = requests.get(f"{RENDER_URL}/api/cron/eod", params={"token": CRON_SECRET}, timeout=60)
         if res.status_code == 200:
             logger.info("✅ Remote Server Acknowledged EOD Trigger.")
         else:
